@@ -31,6 +31,7 @@ main {
 #top {
   scroll-margin-top: 100px; /* juster efter headerens højde */
   scroll-behavior: smooth;
+
 }
 
 /* fjern link-styling for skip-to-top */
@@ -43,5 +44,7 @@ main {
 .skip-to-top:hover {
   text-decoration: none;
 }
+
+
 
 
