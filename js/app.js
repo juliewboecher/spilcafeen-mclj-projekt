@@ -1,127 +1,47 @@
 "use strict";
 
-// Global variabel til alle spil
 let allSpil = [];
 
-// #0: Listen for page load - og start app ved at kalde funktionen initApp
 window.addEventListener("load", initApp);
 
-// #1: Initialize the app
 function initApp() {
   console.log("initApp: app.js is running 🎉");
   getSpil();
 
-  // Event listeners for alle filtre
-  document.querySelector("#search-input").addEventListener("input", filterSpil);
-  document
-    .querySelector("#genre-select")
-    .addEventListener("change", filterSpil);
-  document.querySelector("#sort-select").addEventListener("change", filterSpil);
-  document
-    .querySelector("#playtime-from")
-    .addEventListener("input", filterSpil);
-  document.querySelector("#playtime-to").addEventListener("input", filterSpil);
-  document.querySelector("#players-from").addEventListener("input", filterSpil);
-  document.querySelector("#players-to").addEventListener("input", filterSpil);
+  const maybe = (sel, evt, fn) => {
+    const el = document.querySelector(sel);
+    if (el) el.addEventListener(evt, fn);
+  };
 
-  document
-    .querySelector("#clear-filters")
-    .addEventListener("click", clearAllFilters);
+  maybe("#search-input", "input", filterSpil);
+  maybe("#genre-select", "change", filterSpil);
+  maybe("#sort-select", "change", filterSpil);
+  maybe("#playtime-from", "input", filterSpil);
+  maybe("#playtime-to", "input", filterSpil);
+  maybe("#players-from", "input", filterSpil);
+  maybe("#players-to", "input", filterSpil);
+  maybe("#clear-filters", "click", clearAllFilters);
 }
 
 console.log("app.js loaded");
 window.addEventListener("DOMContentLoaded", () => console.log("DOM ready"));
 
-// Fetch spil fra JSON file
 async function getSpil() {
-  const response = await fetch(
-    "https://raw.githubusercontent.com/cederdorff/race/refs/heads/master/data/games.json"
-  );
-  allSpil = await response.json(); // Gem data i global variabel
-  console.log("📁 Spil loaded:", allSpil.length);
-  populateGenreDropdown(); // Udfyld dropdown med genrer fra data
-  displaySpil(allSpil); // Vis alle spil ved start
-}
-
-// #3: Display all Spil
-function displaySpil(Spil) {
-  const SpilList = document.querySelector("#spil-list");
-  spilList.innerHTML = "";
-
-  if (spil.length === 0) {
-    spilList.innerHTML =
-      '<p class="no-results">Ingen spil matchede dine filtre 😢</p>';
-    return;
-  }
-
-  for (const spil of spil) {
-    displaySpil(spil);
-  }
-}
-
-// #5: Udfyld genre-dropdown med alle unikke genrer fra data
-function populateGenreDropdown() {
-  const genreSelect = document.querySelector("#genre-select");
-  const genres = new Set();
-
-  // Samle alle unikke genrer fra alle spil
-  for (const spil of allSpil) {
-    for (const genre of spil.genre) {
-      genres.add(genre);
-    }
-  }
-
-  // #4: Render a single movie card and add event listeners
-  function displaySpil(spil) {
-    const spilList = document.querySelector("#spil-list");
-
-    //..SPIL CARD (STANDART FORMAT)..
-    const spilHTML = `
-    <article class="spil-card">
-      <img src="${spil.image}" 
-           alt="Poster of ${spil.title}" 
-           class="spil-poster" />
-      <div class="spil-info">
-        <h3>${spil.title} <span class="spil-rating">(${spil.rating})</span></h3>
-
-        <p class="spil-location"><strong>Lokation:</strong>${spil.location}</p>
-        <p class="spil-shelf"><strong>Hylde:</strong>⭐ ${spil.shelf}</p>
-        <p class="spil-genre"><strong>Genre:</strong> ${spil.genre}</p>
-        <p class="spil-playtime"><strong>Spilletid:</strong> ${spil.playtime}</p>
-        <p class="spil-players"></p><strong>Antal spillere:</strong> ${spil.players}</p>
-        <p class=description><strong>Beskrivelse:</strong></p>
-        <p class="description">${spil.description}</p>
-
-        <button class="details-btn">Læs mere</button>
-      </div>
-    </article>
-  `;
-    spilList.insertAdjacentHTML("beforeend", movieHTML);
-
-    // Tilføj click event til den nye card
-    const newCard = spilList.lastElementChild;
-    newCard.addEventListener("click", function () {
-      console.log(`🎬 Klik på: "${spil.title}"`);
-      showSpilModal(spil);
-    });
-  }
-
-  // Fjern gamle options undtagen 'Alle genrer'
-  genreSelect.innerHTML = '<option value="all">Alle genrer</option>';
-
-  // Sortér genres alfabetisk og tilføj dem som options
-  const sortedGenres = Array.from(genres).sort();
-  for (const genre of sortedGenres) {
-    genreSelect.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${genre}">${genre}</option>`
+  try {
+    const response = await fetch(
+      "https://raw.githubusercontent.com/cederdorff/race/master/data/games.json"
     );
+    if (!response.ok) throw new Error("Network response was not ok");
+    allSpil = await response.json();
+    console.log("📁 Spil loaded:", allSpil.length);
+    populateGenreDropdown();
+    displaySpil(allSpil);
+  } catch (err) {
+    console.error("Fejl ved hentning af spil:", err);
   }
-
-  console.log("🎭 Genres loaded:", sortedGenres.length, "unique genres");
 }
 
-// Filtreringsfunktion — kaldet fra dine event listeners
+// Filtreringsfunktion
 function filterSpil() {
   const q =
     document.querySelector("#search-input")?.value.trim().toLowerCase() || "";
@@ -139,31 +59,22 @@ function filterSpil() {
   );
 
   let filtered = allSpil.filter((spil) => {
-    // søg i titel og beskrivelse
     if (q) {
       const title = (spil.title || spil.name || "").toLowerCase();
       const desc = (spil.description || "").toLowerCase();
       if (!title.includes(q) && !desc.includes(q)) return false;
     }
-
-    // genre-filter (spil.genre forventes at være array)
     if (genre !== "all") {
       if (!Array.isArray(spil.genre) || !spil.genre.includes(genre))
         return false;
     }
-
-    // playtime-filter
     const playtime = Number(spil.playtime) || 0;
     if (playtime < playFrom || playtime > playTo) return false;
-
-    // players-filter
     const players = Number(spil.players) || 0;
     if (players < playersFrom || players > playersTo) return false;
-
     return true;
   });
 
-  // sortering
   if (sort === "title") {
     filtered.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
   } else if (sort === "rating") {
@@ -173,7 +84,7 @@ function filterSpil() {
   displaySpil(filtered);
 }
 
-// Viser liste af spil — acceptér array
+// Vis liste af spil (bruges af filterSpil og getSpil)
 function displaySpil(spilArray) {
   const spilList = document.querySelector("#spil-list");
   if (!spilList) {
@@ -203,7 +114,7 @@ function renderSpilCard(spil, container) {
       <div class="spil-info">
         <h3>${
           spil.title || spil.name || "Untitled"
-        } <span class="spil-rating">(${spil.rating || "N/A"})</span></h3>
+        } <span class="spil-rating"><strong></strong>(${spil.rating || "N/A"})</span></h3>
         <p class="spil-location"><strong>Lokation:</strong> ${
           spil.location || "-"
         }</p>
@@ -234,12 +145,11 @@ function renderSpilCard(spil, container) {
   }
 }
 
-// Udfyld genre-dropdown (lukket korrekt)
+// Udfyld genre-dropdown (én implementation)
 function populateGenreDropdown() {
   const genreSelect = document.querySelector("#genre-select");
   if (!genreSelect) return;
   const genres = new Set();
-
   for (const spil of allSpil) {
     if (Array.isArray(spil.genre)) {
       for (const g of spil.genre) genres.add(g);
@@ -247,7 +157,6 @@ function populateGenreDropdown() {
       genres.add(spil.genre);
     }
   }
-
   genreSelect.innerHTML = '<option value="all">Alle genrer</option>';
   const sorted = Array.from(genres).sort();
   for (const g of sorted) {
@@ -257,4 +166,24 @@ function populateGenreDropdown() {
     );
   }
   console.log("🎭 Genres loaded:", sorted.length);
+}
+
+function clearAllFilters() {
+  const els = [
+    "#search-input",
+    "#genre-select",
+    "#sort-select",
+    "#playtime-from",
+    "#playtime-to",
+    "#players-from",
+    "#players-to",
+  ];
+  for (const sel of els) {
+    const el = document.querySelector(sel);
+    if (!el) continue;
+    if (el.tagName === "SELECT" || el.type === "text")
+      el.value = sel === "#genre-select" ? "all" : "";
+    else if (el.type === "number") el.value = "";
+  }
+  displaySpil(allSpil);
 }
