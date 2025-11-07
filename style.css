@@ -1,0 +1,47 @@
+
+/* =====================
+   GLOBAL STYLES
+   ===================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* HER ÆNDRER VI BAGGRUNDEN */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  background: #202124;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* =====================
+   LAYOUT (main container)
+   ===================== */
+main {
+  max-width: min(1400px, 95vw);
+  margin: 0 auto;
+  padding: clamp(5rem, 10vw, 8rem) 1rem 2rem;
+}
+
+#top {
+  scroll-margin-top: 100px; /* juster efter headerens højde */
+  scroll-behavior: smooth;
+}
+
+/* fjern link-styling for skip-to-top */
+.skip-to-top {
+  color: inherit;
+  text-decoration: none;
+  display: inline-block;
+}
+.skip-to-top:focus,
+.skip-to-top:hover {
+  text-decoration: none;
+}
+
+
