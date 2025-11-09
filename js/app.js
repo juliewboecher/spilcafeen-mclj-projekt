@@ -144,8 +144,9 @@ function renderSpilCard(spil, container) {
     });
   }
 }
-
+//GENRE DROPDOWN.....
 // Udfyld genre-dropdown (én implementation)
+
 function populateGenreDropdown() {
   const genreSelect = document.querySelector("#genre-select");
   if (!genreSelect) return;
@@ -168,6 +169,8 @@ function populateGenreDropdown() {
   console.log("🎭 Genres loaded:", sorted.length);
 }
 
+
+// Ryd alle filtre
 function clearAllFilters() {
   const els = [
     "#search-input",
@@ -186,4 +189,25 @@ function clearAllFilters() {
     else if (el.type === "number") el.value = "";
   }
   displaySpil(allSpil);
+}
+
+// #6: Vis movie i modal dialog
+function showSpilModal(spil) {
+  console.log("🎭 Åbner modal for:", spil.title);
+
+  // Byg HTML struktur dynamisk
+  const dialogContent = document.querySelector("#dialog-content");
+  dialogContent.innerHTML = `
+    <img src="${spil.image}" alt="Poster af ${spil.title}" class="spil-poster">
+    <div class="dialog-details">
+      <h2>${spil.title} <span class="spil-rating">(${spil.rating})</span></h2>
+      <p class="movie-genre">${spil.genre.join(", ")}</p>
+      <p class="spil-rating">⭐ ${spil.rating}</p>
+     
+      <p class="spil-description">${spil.description}</p>
+    </div>
+  `;
+
+  // Åbn modalen
+  document.querySelector("#spil-dialog").showModal();
 }

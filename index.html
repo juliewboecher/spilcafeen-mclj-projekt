@@ -15,6 +15,7 @@
     </header>
 
     <main>
+        
         <!-- Filter bar til at søge efter specifik spil -->
       <div class="filterbar">
       <input type="text" id="search-input" placeholder="Søg efter spil..." />
@@ -22,6 +23,11 @@
         <select id="genre-select">
           <option value="all">Alle genrer</option>
           <!-- Genrer indsættes dynamisk via JavaScript -->
+        </select>
+
+        <select id="players-select">
+          <option value="all">Antal spillere</option>
+          <!-- Platforme indsættes dynamisk via JavaScript -->
         </select>
 
       <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
@@ -37,7 +43,15 @@
     </main>
 
     <footer></footer>
-
+ <!-- SPIL Detail Modal -->
+    <dialog id="spil-dialog">
+      <form method="dialog">
+        <button id="close-dialog" aria-label="Close">✕</button>
+        <div id="dialog-content">
+          <!-- Spil details will be injected here via JavaScript -->
+        </div>
+      </form>
+    </dialog>
     <script src="js/app.js"></script>
 
     </body>
