@@ -23,6 +23,9 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4);
   --radius: 1rem;
   --transition: 250ms ease;
+  /* Sticky footer: reserver plads og fastgør footer til bunden */
+   --footer-height: 64px;
+   
 }
 
 /* =====================
@@ -52,6 +55,8 @@ main {
   max-width: min(1400px, 95vw);
   margin: 0 auto;
   padding: clamp(5rem, 10vw, 8rem) 1rem 2rem;
+   /* behold eksisterende paddings, men sørg for ekstra plads i bunden */
+  padding-bottom: calc(2rem + var(--footer-height));
 }
 
 header {
@@ -239,4 +244,26 @@ header {
   cursor: pointer;
   font-size: 0,5rem;
   transition: background-color 0.3s ease;
+}
+
+/* Make footer sticky to viewport bottom */
+footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--footer-height);
+  background: whitesmoke;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Ikoner ud til hver side */;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  padding: 0 1rem;
+}
+
+
+/* Juster på små skærme hvis nødvendigt */
+@media (max-width: 480px) {
+  :root { --footer-height: 56px; }
 }

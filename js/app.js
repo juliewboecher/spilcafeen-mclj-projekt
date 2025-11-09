@@ -201,7 +201,7 @@ function showSpilModal(spil) {
     <img src="${spil.image}" alt="Poster af ${spil.title}" class="spil-poster">
     <div class="dialog-details">
       <h2>${spil.title} <span class="spil-rating">(${spil.rating})</span></h2>
-      <p class="movie-genre">${spil.genre.join(", ")}</p>
+      <p class="spil-genre">${spil.genre.join(", ")}</p>
       <p class="spil-rating">⭐ ${spil.rating}</p>
      
       <p class="spil-description">${spil.description}</p>
