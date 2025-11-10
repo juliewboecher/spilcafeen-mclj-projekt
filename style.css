@@ -86,6 +86,7 @@ header {
 #top {
   scroll-margin-top: 100px; /* juster efter headerens højde */
   scroll-behavior: smooth;
+  margin: -10px 0 0 0; /* juster efter headerens højde */
 
 }
 
