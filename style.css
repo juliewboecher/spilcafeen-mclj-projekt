@@ -80,6 +80,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 60vh;
 }
 
 #top {
@@ -158,6 +159,12 @@ header {
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: var(--transition);
+  display: flex;
+  align-items: right;
+}
+
+#clear-filters {
+  margin-left: auto; /* Skub knappen til højre */
 }
 
 
@@ -259,23 +266,68 @@ header {
 }
 
 /* Make footer sticky to viewport bottom */
-footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: var(--footer-height);
-  background: whitesmoke;
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* Ikoner ud til hver side */;
-  box-shadow: var(--shadow);
-  z-index: 1000;
-  padding: 0 1rem;
-}
+
 
 
 /* Juster på små skærme hvis nødvendigt */
 @media (max-width: 480px) {
   :root { --footer-height: 56px; }
+}
+
+
+/* =====================
+   Spil DIALOG
+   ===================== */
+dialog#spil-dialog {
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+  max-width: min(95vw, 1000px);
+  max-height: 90vh;
+  background: whitesmoke;
+  color: var(--text);
+  overflow: hidden;
+  position: relative;
+  margin: auto;
+}
+
+dialog#spil-dialog::backdrop {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+#close-dialog {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-light);
+  border: none;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  z-index: 10;
+}
+
+#close-dialog:hover {
+  background: var(--error);
+  color: white;
+  transform: scale(1.1);
+}
+
+#dialog-content {
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 2fr;
+  gap: 2rem;
+  align-items: start;
+  overflow-y: auto;
+  max-height: 90vh;
 }
