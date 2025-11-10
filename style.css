@@ -43,9 +43,17 @@ body {
     sans-serif;
   font-size: 1rem;
   line-height: 1.6;
-  background: whitesmoke;
+  background-image: url("img/logofacegentaget.png");
   color: var(--text);
   min-height: 100vh;
+}
+
+/* 2) Single image fill (cover) — én baggrund fylder hele elementet */
+.body-cover {
+  background-image: url("img/logofacegentaget.png");
+  background-repeat: repeat;
+  background-position: center;
+  background-size: cover;                   /* fylder elementet uden at strække proportioner */
 }
 
 /* =====================
