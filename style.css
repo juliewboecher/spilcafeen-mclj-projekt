@@ -120,8 +120,12 @@ header {
   font-size: 1rem;
 }   
 
-#search-input {
+#search-bar {
   max-width: 400px;
+   display: flex;
+  align-items: center;
+  justify-content: space-between; /* Ikoner ud til hver side */;
+
 }
 
 #genre-select {

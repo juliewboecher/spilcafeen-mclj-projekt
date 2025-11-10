@@ -16,9 +16,15 @@
 
     <main>
         
+
         <!-- Filter bar til at søge efter specifik spil -->
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Søg efter spil..." />
+        <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
+      </div>
+
       <div class="filterbar">
-      <input type="text" id="search-input" placeholder="Søg efter spil..." />
+      
 
         <select id="genre-select">
           <option value="all">Alle genrer</option>
@@ -30,7 +36,27 @@
           <!-- Platforme indsættes dynamisk via JavaScript -->
         </select>
 
-      <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
+         <select id="location-select">
+          <option value="all">Lokation</option>
+          <!-- Lokationer indsættes dynamisk via JavaScript -->
+        </select>
+
+        <select id="difficulty-select">
+          <option value="all">Sværhedsgrad</option>
+          <!-- Sværhedsgrader indsættes dynamisk via JavaScript -->
+        </select>
+
+        <select id="playtime-select">
+          <option value="all">Spilletid</option>
+          <!-- Spilletider indsættes dynamisk via JavaScript -->
+        </select>
+
+        <select id="age">
+          <option value="all">Alder</option>
+          <!-- Aldersgrupper indsættes dynamisk via JavaScript -->
+        </select>
+
+      
 
       </div>
 

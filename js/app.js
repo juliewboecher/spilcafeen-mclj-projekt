@@ -1,213 +1,355 @@
 "use strict";
 
+/*
+  Komplett filter-implementering:
+  - Henter allSpil fra remote JSON (juster URL hvis du bruger lokal fil)
+  - Udfylder selects: genre-select, players-select, playtime-select, location-select, difficulty-select, age
+  - Filtrerer ved change/input på relevante elementer
+*/
+
 let allSpil = [];
 
-window.addEventListener("load", initApp);
+// Normaliser tekst til sammenligning/value
+function norm(s) {
+  return s === undefined || s === null ? "" : String(s).trim().toLowerCase();
+}
+
+// Basic escaping for templates
+function escapeHtml(str) {
+  if (str === undefined || str === null) return "";
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+window.addEventListener("DOMContentLoaded", initApp);
 
 function initApp() {
-  console.log("initApp: app.js is running 🎉");
+  console.log("initApp: starter");
+  bindUI();
   getSpil();
+}
 
-  const maybe = (sel, evt, fn) => {
+function bindUI() {
+  const on = (sel, evt, fn) => {
     const el = document.querySelector(sel);
     if (el) el.addEventListener(evt, fn);
   };
-
-  maybe("#search-input", "input", filterSpil);
-  maybe("#genre-select", "change", filterSpil);
-  maybe("#sort-select", "change", filterSpil);
-  maybe("#playtime-from", "input", filterSpil);
-  maybe("#playtime-to", "input", filterSpil);
-  maybe("#players-from", "input", filterSpil);
-  maybe("#players-to", "input", filterSpil);
-  maybe("#clear-filters", "click", clearAllFilters);
+  on("#search-input", "input", filterSpil);
+  on("#genre-select", "change", filterSpil);
+  on("#players-select", "change", filterSpil);
+  on("#playtime-select", "change", filterSpil);
+  on("#location-select", "change", filterSpil);
+  on("#difficulty-select", "change", filterSpil);
+  on("#age", "change", filterSpil);
+  on("#clear-filters", "click", clearAllFilters);
 }
 
-console.log("app.js loaded");
-window.addEventListener("DOMContentLoaded", () => console.log("DOM ready"));
-
+// Hent data
 async function getSpil() {
   try {
-    const response = await fetch(
-      "https://raw.githubusercontent.com/cederdorff/race/master/data/games.json"
-    );
-    if (!response.ok) throw new Error("Network response was not ok");
-    allSpil = await response.json();
-    console.log("📁 Spil loaded:", allSpil.length);
-    populateGenreDropdown();
+    const url =
+      "https://raw.githubusercontent.com/cederdorff/race/master/data/games.json";
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Hentning fejlede: " + res.status);
+    allSpil = await res.json();
+    console.log("📁 Spil hentet:", allSpil.length);
+    if (allSpil.length) console.log("Eksempel:", allSpil[0]);
+
+    // Populate selects baseret på JSON
+    populateGenreSelect();
+    populatePlayersSelect();
+    populatePlaytimeSelect();
+    populateLocationSelect();
+    populateDifficultySelect();
+    populateAgeSelect();
+
+    // Vis alt ved start
     displaySpil(allSpil);
   } catch (err) {
-    console.error("Fejl ved hentning af spil:", err);
+    console.error("Fejl i getSpil:", err);
   }
 }
 
-// Filtreringsfunktion
-function filterSpil() {
-  const q =
-    document.querySelector("#search-input")?.value.trim().toLowerCase() || "";
-  const genre = document.querySelector("#genre-select")?.value || "all";
-  const sort = document.querySelector("#sort-select")?.value || "none";
-  const playFrom = Number(document.querySelector("#playtime-from")?.value || 0);
-  const playTo = Number(
-    document.querySelector("#playtime-to")?.value || Infinity
-  );
-  const playersFrom = Number(
-    document.querySelector("#players-from")?.value || 0
-  );
-  const playersTo = Number(
-    document.querySelector("#players-to")?.value || Infinity
-  );
+/* ---------- Populate helpers ---------- */
 
-  let filtered = allSpil.filter((spil) => {
+// Håndter mange forskellige strukturer for genre
+function populateGenreSelect() {
+  const sel = document.querySelector("#genre-select");
+  if (!sel) return;
+  const map = new Map();
+  for (const s of allSpil) {
+    const raw = s.genre ?? s.genres ?? s.category ?? s.categories;
+    if (!raw) continue;
+    if (Array.isArray(raw)) {
+      for (const item of raw) pushGenreVal(map, item);
+    } else pushGenreVal(map, raw);
+  }
+  const entries = Array.from(map.entries()).sort((a, b) =>
+    a[1].localeCompare(b[1], undefined, { sensitivity: "base" })
+  );
+  sel.innerHTML = `<option value="all">Alle genrer</option>` + entries.map(([k, v]) => `<option value="${escapeHtml(k)}">${escapeHtml(v)}</option>`).join("");
+  console.log("🎭 Genres:", entries.map(e => e[1]));
+}
+function pushGenreVal(map, val) {
+  if (val === null || val === undefined) return;
+  if (typeof val === "object") val = val.name ?? val.title ?? val.value ?? JSON.stringify(val);
+  const label = String(val).trim();
+  if (!label) return;
+  const key = norm(label);
+  if (!map.has(key)) map.set(key, label);
+}
+
+// Players - prøv at udlede antal fra forskellige felter
+function populatePlayersSelect() {
+  const sel = document.querySelector("#players-select");
+  if (!sel) return;
+  const set = new Set();
+  for (const s of allSpil) {
+    if (s.players) {
+      // kan være "2-4" eller "2"
+      if (typeof s.players === "string" && s.players.includes("-")) {
+        const [min] = s.players.split("-").map(n => Number(n));
+        if (!isNaN(min)) set.add(String(min));
+      } else {
+        const n = Number(s.players);
+        if (!isNaN(n) && n > 0) set.add(String(n));
+      }
+    } else {
+      const n = Number(s.minPlayers ?? s.min_player ?? 0);
+      if (!isNaN(n) && n > 0) set.add(String(n));
+    }
+  }
+  const nums = Array.from(set).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b);
+  // standard options hvis ingen data
+  const options = nums.length ? nums.map(String) : ["1","2","3","4"];
+  sel.innerHTML = `<option value="all">Antal spillere</option>` + options.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("") + `<option value="5+">5+</option>`;
+}
+
+// Playtime - faste bins
+function populatePlaytimeSelect() {
+  const sel = document.querySelector("#playtime-select");
+  if (!sel) return;
+  const bins = [
+    ["all","Spilletid"],
+    ["0-15","<15 min"],
+    ["15-30","15-30 min"],
+    ["30-60","30-60 min"],
+    ["60+","60+ min"]
+  ];
+  sel.innerHTML = bins.map(b => `<option value="${b[0]}">${b[1]}</option>`).join("");
+}
+
+// Location
+function populateLocationSelect() {
+  const sel = document.querySelector("#location-select");
+  if (!sel) return;
+  const map = new Map();
+  for (const s of allSpil) {
+    const raw = s.location ?? s.store ?? s.place;
+    if (!raw) continue;
+    const label = String(raw).trim();
+    if (!label) continue;
+    const key = norm(label);
+    if (!map.has(key)) map.set(key, label);
+  }
+  sel.innerHTML = `<option value="all">Alle lokationer</option>` + Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`).join("");
+}
+
+// Difficulty
+function populateDifficultySelect() {
+  const sel = document.querySelector("#difficulty-select");
+  if (!sel) return;
+  const map = new Map();
+  for (const s of allSpil) {
+    const raw = s.difficulty ?? s.level ?? s.difficulty_level;
+    if (!raw) continue;
+    const label = String(raw).trim();
+    const key = norm(label);
+    if (!map.has(key)) map.set(key, label);
+  }
+  sel.innerHTML = `<option value="all">Sværhedsgrad</option>` + Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`).join("");
+}
+
+// Age
+function populateAgeSelect() {
+  const sel = document.querySelector("#age");
+  if (!sel) return;
+  const set = new Set();
+  for (const s of allSpil) {
+    const a = Number(s.min_age ?? s.age ?? 0);
+    if (a > 0) set.add(a);
+  }
+  const sorted = Array.from(set).sort((a,b)=>a-b);
+  sel.innerHTML = '<option value="all">Alder</option>' + (sorted.length ? sorted.map(a=>`<option value="${a}">${a}+</option>`).join("") : ['<option value="6">6+</option>','<option value="8">8+</option>','<option value="10">10+</option>'].join(''));
+}
+
+/* ---------- Filtrering ---------- */
+
+// Hjælper til at matche range/plus options for numbers
+function matchesRangeOption(value, option) {
+  if (option === "all") return true;
+  if (option.endsWith("+")) {
+    const min = Number(option.replace("+",""));
+    return value >= min;
+  }
+  if (option.includes("-")) {
+    const [min, max] = option.split("-").map(n => Number(n));
+    return value >= min && value <= max;
+  }
+  // enkel værdi
+  return value === Number(option);
+}
+
+function filterSpil() {
+  const q = document.querySelector("#search-input")?.value.trim().toLowerCase() || "";
+  const genreValue = document.querySelector("#genre-select")?.value || "all"; // normalized key
+  const playersValue = document.querySelector("#players-select")?.value || "all";
+  const playtimeValue = document.querySelector("#playtime-select")?.value || "all";
+  const locationValue = document.querySelector("#location-select")?.value || "all";
+  const difficultyValue = document.querySelector("#difficulty-select")?.value || "all";
+  const ageValue = document.querySelector("#age")?.value || "all";
+
+  let result = allSpil.filter(s => {
+    // søg i title/description
     if (q) {
-      const title = (spil.title || spil.name || "").toLowerCase();
-      const desc = (spil.description || "").toLowerCase();
+      const title = (s.title || s.name || "").toLowerCase();
+      const desc = (s.description || "").toLowerCase();
       if (!title.includes(q) && !desc.includes(q)) return false;
     }
-    if (genre !== "all") {
-      if (!Array.isArray(spil.genre) || !spil.genre.includes(genre))
-        return false;
+
+    // genre
+    if (genreValue !== "all") {
+      const raw = s.genre ?? s.genres ?? s.category ?? s.categories;
+      let gList = [];
+      if (Array.isArray(raw)) {
+        gList = raw.map(g => (typeof g === "object" ? norm(g.name ?? g.title ?? g.value) : norm(g)));
+      } else if (typeof raw === "string") gList = [norm(raw)];
+      else if (raw && typeof raw === "object") gList = [norm(raw.name ?? raw.title ?? raw.value)];
+      if (!gList.includes(genreValue)) return false;
     }
-    const playtime = Number(spil.playtime) || 0;
-    if (playtime < playFrom || playtime > playTo) return false;
-    const players = Number(spil.players) || 0;
-    if (players < playersFrom || players > playersTo) return false;
+
+    // players
+    if (playersValue !== "all") {
+      let p = Number(s.players);
+      if (isNaN(p)) {
+        // prøv minPlayers eller parse ranges i string
+        if (s.minPlayers) p = Number(s.minPlayers);
+        else if (typeof s.players === "string" && s.players.includes("-")) {
+          p = Number(s.players.split("-")[0]);
+        } else p = 0;
+      }
+      if (!matchesRangeOption(p, playersValue)) return false;
+    }
+
+    // playtime
+    if (playtimeValue !== "all") {
+      const t = Number(s.playtime) || Number(s.duration) || 0;
+      if (!matchesRangeOption(t, playtimeValue)) return false;
+    }
+
+    // location
+    if (locationValue !== "all") {
+      const loc = norm(s.location ?? s.store ?? s.place ?? "");
+      if (loc !== locationValue) return false;
+    }
+
+    // difficulty
+    if (difficultyValue !== "all") {
+      const diff = norm(s.difficulty ?? s.level ?? "");
+      if (diff !== difficultyValue) return false;
+    }
+
+    // age
+    if (ageValue !== "all") {
+      const ageNum = Number(s.min_age ?? s.age ?? 0);
+      if (isNaN(ageNum) || ageNum < Number(ageValue)) return false;
+    }
+
     return true;
   });
 
-  if (sort === "title") {
-    filtered.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-  } else if (sort === "rating") {
-    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  }
-
-  displaySpil(filtered);
+  displaySpil(result);
 }
 
-// Vis liste af spil (bruges af filterSpil og getSpil)
-function displaySpil(spilArray) {
-  const spilList = document.querySelector("#spil-list");
-  if (!spilList) {
-    console.warn("#spil-list ikke fundet i DOM");
+/* ---------- Render / UI ---------- */
+
+function displaySpil(list) {
+  const container = document.querySelector("#spil-list");
+  if (!container) return;
+  container.innerHTML = "";
+  if (!list || list.length === 0) {
+    container.innerHTML = '<p class="no-results">Ingen spil matchede dine filtre 😢</p>';
     return;
   }
-  spilList.innerHTML = "";
-
-  if (!spilArray || spilArray.length === 0) {
-    spilList.innerHTML =
-      '<p class="no-results">Ingen spil matchede dine filtre 😢</p>';
-    return;
-  }
-
-  for (const spil of spilArray) {
-    renderSpilCard(spil, spilList);
-  }
+  for (const s of list) renderSpilCard(s, container);
 }
 
-// Render et enkelt spil-kort
 function renderSpilCard(spil, container) {
-  const cardHTML = `
-    <article class="spil-card">
-      <img src="${spil.image || ""}" alt="Poster of ${
-    spil.title || ""
-  }" class="spil-poster" />
+  const image = spil.image || spil.image_url || "";
+  const title = spil.title || spil.name || "Untitled";
+  const rating = spil.rating ?? "N/A";
+  const location = spil.location || "-";
+  const shelf = spil.shelf || "-";
+  const playtime = spil.playtime ?? spil.duration ?? "-";
+  const players = spil.players ?? spil.minPlayers ?? "-";
+  const genreLabel = Array.isArray(spil.genre) ? spil.genre.join(", ") : (spil.genre ? String(spil.genre) : "-");
+  const desc = spil.description || "";
+
+  const html = `
+    <article class="spil-card" tabindex="0">
+      <img src="${escapeHtml(image)}" class="spil-poster" alt="Poster ${escapeHtml(title)}">
       <div class="spil-info">
-        <h3>${
-          spil.title || spil.name || "Untitled"
-        } <span class="spil-rating"><strong></strong>(${spil.rating || "N/A"})</span></h3>
-        <p class="spil-location"><strong>Lokation:</strong> ${
-          spil.location || "-"
-        }</p>
-        <p class="spil-shelf"><strong>Hylde:</strong> ${spil.shelf || "-"}</p>
-        <p class="spil-genre"><strong>Genre:</strong> ${
-          Array.isArray(spil.genre) ? spil.genre.join(", ") : spil.genre || "-"
-        }</p>
-        <p class="spil-playtime"><strong>Spilletid:</strong> ${
-          spil.playtime || "-"
-        }</p>
-        <p class="spil-players"><strong>Antal spillere:</strong> ${
-          spil.players || "-"
-        }</p>
-        <p class="description"><strong>Beskrivelse:</strong></p>
-        <p class="description">${spil.description || ""}</p>
-        <button class="details-btn">Læs mere</button>
+        <h3>${escapeHtml(title)} <span class="spil-rating">(${escapeHtml(rating)})</span></h3>
+        <p><strong>Genre:</strong> ${escapeHtml(genreLabel)}</p>
+        <p><strong>Spilletid:</strong> ${escapeHtml(playtime)}</p>
+        <p><strong>Spillere:</strong> ${escapeHtml(players)}</p>
+        <p class="description">${escapeHtml(desc)}</p>
+        <button class="details-btn" type="button">Læs mere</button>
       </div>
     </article>
   `;
-  container.insertAdjacentHTML("beforeend", cardHTML);
-
-  const newCard = container.lastElementChild;
-  if (newCard) {
-    newCard.addEventListener("click", () => {
-      console.log(`Klik på: "${spil.title || spil.name || "Untitled"}"`);
-      if (typeof showSpilModal === "function") showSpilModal(spil);
-    });
-  }
-}
-//GENRE DROPDOWN.....
-// Udfyld genre-dropdown (én implementation)
-
-function populateGenreDropdown() {
-  const genreSelect = document.querySelector("#genre-select");
-  if (!genreSelect) return;
-  const genres = new Set();
-  for (const spil of allSpil) {
-    if (Array.isArray(spil.genre)) {
-      for (const g of spil.genre) genres.add(g);
-    } else if (spil.genre) {
-      genres.add(spil.genre);
-    }
-  }
-  genreSelect.innerHTML = '<option value="all">Alle genrer</option>';
-  const sorted = Array.from(genres).sort();
-  for (const g of sorted) {
-    genreSelect.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${g}">${g}</option>`
-    );
-  }
-  console.log("🎭 Genres loaded:", sorted.length);
+  container.insertAdjacentHTML("beforeend", html);
+  const el = container.lastElementChild;
+  if (el) el.addEventListener("click", () => showSpilModal(spil));
 }
 
+function showSpilModal(spil) {
+  const dialog = document.querySelector("#spil-dialog");
+  const content = document.querySelector("#dialog-content");
+  if (!dialog || !content) return;
+  const imageHtml = spil.image ? `<img src="${escapeHtml(spil.image)}" class="spil-poster">` : "";
+  const genreText = Array.isArray(spil.genre) ? spil.genre.join(", ") : (spil.genre ? String(spil.genre) : "-");
+  content.innerHTML = `
+    ${imageHtml}
+    <div class="dialog-details">
+      <h2>${escapeHtml(spil.title ?? spil.name ?? "Untitled")}</h2>
+      <p><strong>Genre:</strong> ${escapeHtml(genreText)}</p>
+      <p>${escapeHtml(spil.description ?? "")}</p>
+    </div>
+  `;
+  const closeBtn = dialog.querySelector("#close-dialog");
+  if (closeBtn) {
+    // ensure single listener
+    closeBtn.replaceWith(closeBtn.cloneNode(true));
+    dialog.querySelector("#close-dialog").addEventListener("click", ()=>dialog.close(), { once: true });
+  }
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
+}
 
-// Ryd alle filtre
+/* ---------- Utilities ---------- */
+
 function clearAllFilters() {
-  const els = [
-    "#search-input",
-    "#genre-select",
-    "#sort-select",
-    "#playtime-from",
-    "#playtime-to",
-    "#players-from",
-    "#players-to",
-  ];
+  const els = ["#search-input","#genre-select","#players-select","#playtime-select","#location-select","#difficulty-select","#age"];
   for (const sel of els) {
     const el = document.querySelector(sel);
     if (!el) continue;
-    if (el.tagName === "SELECT" || el.type === "text")
-      el.value = sel === "#genre-select" ? "all" : "";
-    else if (el.type === "number") el.value = "";
+    if (el.tagName === "SELECT") el.value = "all";
+    else if (el.type === "text") el.value = "";
   }
   displaySpil(allSpil);
-}
-
-// #6: Vis movie i modal dialog
-function showSpilModal(spil) {
-  console.log("🎭 Åbner modal for:", spil.title);
-
-  // Byg HTML struktur dynamisk
-  const dialogContent = document.querySelector("#dialog-content");
-  dialogContent.innerHTML = `
-    <img src="${spil.image}" alt="Poster af ${spil.title}" class="spil-poster">
-    <div class="dialog-details">
-      <h2>${spil.title} <span class="spil-rating">(${spil.rating})</span></h2>
-      <p class="spil-genre">${spil.genre.join(", ")}</p>
-      <p class="spil-rating">⭐ ${spil.rating}</p>
-     
-      <p class="spil-description">${spil.description}</p>
-    </div>
-  `;
-
-  // Åbn modalen
-  document.querySelector("#spil-dialog").showModal();
 }
