@@ -500,13 +500,41 @@ dialog#spil-dialog::backdrop {
   max-height: 90vh;
 }
 
+
+
+
+
+
+
+/* =====================
+   CAROUSEL STYLES
+   ===================== */
 /* Carousel: scroll-snap og scrollable viewport */
+
+
 #top-carousel.carousel {
- display: flex;
- align-items: center;
- gap: 0.5rem;
- margin: 1rem 0;
+  position: relative; 
+  padding-top: 1.4rem; /* plads til titel */
+  display: flex; /* brug flexbox til layout */
+  align-items: center; /* centrer vertikalt */
+  gap: 0.5rem; /* afstand mellem elementer */
+  margin: 1rem 0; /* lodret margin */
 }
+
+/* linje i fuld viewport-bredde, centreret under titlen */
+#top-carousel.carousel::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  /* juster top for at placere linjen præcis mellem titel og track */
+  top: 0.5rem;
+  width: 100vw;
+  height: 3px;            /* tykkelse på stregen */
+  background: darkred;    /* farve på stregen */
+  z-index: 2;
+}
+
 .carousel-viewport {
  overflow-x: auto;
  -webkit-overflow-scrolling: touch;
@@ -517,9 +545,15 @@ dialog#spil-dialog::backdrop {
 .carousel-track {
  display: flex;
  gap: 1rem;
- padding: 0.25rem;
+ align-items: stretch;
+ will-change: transform;
+ transition: none !important;
+
  /* no transform-based transition needed when using scroll */
 }
+
+
+
 .carousel-card {
  scroll-snap-align: start;
  min-width: 200px;
@@ -532,7 +566,23 @@ dialog#spil-dialog::backdrop {
  cursor: pointer;
  display: flex;
  flex-direction: column;
+ padding: 10px;
 }
+
+.carousel-poster { width: 100%; height: 120px; object-fit: cover; display: block; }
 /* indicate dragging */
 .carousel-viewport.dragging { cursor: grabbing; cursor: -webkit-grabbing; }
+
+.carousel-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  font-weight: 700;
+  transform: translateY(-100%); /* placerer over selve karusellen */
+  padding-left: 0.25rem;
+  color: var(--text);
+}
 

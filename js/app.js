@@ -85,26 +85,25 @@ function bindUI() {
 
 // ...existing code...
 function createTop10Carousel() {
-  const AUTOPLAY_DELAY = 3000; // ms mellem slides
+  const SPEED_PX_PER_SEC = 40; // juster hastighed (px/s)
   const top10 = [...allSpil]
     .sort((a, b) => (b.rating || 0) - (a.rating || 0))
     .slice(0, 10);
   if (!top10.length) return;
 
-  if (document.querySelector("#top-carousel"))
-    document.querySelector("#top-carousel").remove();
+  const existing = document.querySelector("#top-carousel");
+  if (existing) existing.remove();
 
   const container = document.createElement("section");
   container.id = "top-carousel";
   container.className = "carousel";
 
   container.innerHTML = `
-   <button class="carousel-btn prev" aria-label="Forrige">‹</button>
-   <div class="carousel-viewport" tabindex="0" aria-roledescription="carousel">
-     <div class="carousel-track"></div>
-   </div>
-   <button class="carousel-btn next" aria-label="Næste">›</button>
- `;
+    <h2 class="carousel-title">Top 10</h2>
+    <div class="carousel-viewport" tabindex="0" aria-roledescription="carousel">
+      <div class="carousel-track"></div>
+    </div>
+  `;
 
   const track = container.querySelector(".carousel-track");
   const viewport = container.querySelector(".carousel-viewport");
@@ -116,183 +115,107 @@ function createTop10Carousel() {
     const card = document.createElement("article");
     card.className = "carousel-card";
     card.innerHTML = `
-     <img src="${escapeHtml(img)}" alt="${escapeHtml(
-      title
-    )}" class="carousel-poster">
-     <div class="carousel-info">
-       <h4>${escapeHtml(title)}</h4>
-       <div class="carousel-meta">⭐ ${escapeHtml(String(rating))}</div>
-     </div>
-   `;
+      <img src="${escapeHtml(img)}" alt="${escapeHtml(title)}" class="carousel-poster">
+      <div class="carousel-info">
+        <h4>${escapeHtml(title)}</h4>
+        <div class="carousel-meta">⭐ ${escapeHtml(String(rating))}</div>
+      </div>
+    `;
     card.addEventListener("click", () => showSpilModal(s));
     track.appendChild(card);
   }
 
+  // ensure container inserted into DOM
   const spilList = document.querySelector("#spil-list");
   if (spilList) spilList.before(container);
   else document.querySelector("main").prepend(container);
 
-  // sliding logic (transform)
-  const btnPrev = container.querySelector(".carousel-btn.prev");
-  const btnNext = container.querySelector(".carousel-btn.next");
-  const cards = Array.from(track.children);
-
-  track.style.display = "flex";
-  track.style.transition = "transform 300ms ease";
-  let index = 0;
-
-  function getGap() {
-    const style = getComputedStyle(track);
-    return parseFloat(style.gap || "0") || 0;
+  // Duplicate children to enable seamless loop
+  const originalChildren = Array.from(track.children);
+  for (const child of originalChildren) {
+    const clone = child.cloneNode(true);
+    // keep click handler for modal by delegation to cloned content
+    track.appendChild(clone);
   }
 
-  function getStep() {
-    const first = cards[0];
-    const w = first ? first.getBoundingClientRect().width : 200;
-    return w + getGap();
-  }
+  // wait for images to load before measuring
+  const imgs = Array.from(track.querySelectorAll("img"));
+  const imgPromises = imgs.map((img) =>
+    img.complete
+      ? Promise.resolve()
+      : new Promise((res) => img.addEventListener("load", res, { once: true }))
+  );
 
-  function visibleCount() {
-    const step = getStep();
-    return Math.max(1, Math.floor(viewport.clientWidth / step));
-  }
+  Promise.all(imgPromises).then(() => {
+    track.style.display = "flex";
+    track.style.gap = getComputedStyle(track).gap || "1rem";
+    track.style.willChange = "transform";
 
-  function maxIndex() {
-    return Math.max(0, cards.length - visibleCount());
-  }
+    // measure width of one loop (original set)
+    const originalWidth = originalChildren.reduce((sum, el) => {
+      const r = el.getBoundingClientRect();
+      return sum + r.width;
+    }, 0) + (originalChildren.length - 1) * parseFloat(getComputedStyle(track).gap || "0");
 
-  function clamp(i) {
-    return Math.min(Math.max(0, i), maxIndex());
-  }
+    // if zero width fallback
+    const loopWidth = originalWidth > 0 ? originalWidth : track.scrollWidth / 2 || 800;
 
-  function update(animate = true) {
-    const step = getStep();
-    if (!animate) track.style.transition = "none";
-    else track.style.transition = "transform 300ms ease";
-    const x = -index * step;
-    track.style.transform = `translateX(${x}px)`;
-    btnPrev.disabled = index === 0;
-    btnNext.disabled = index === maxIndex();
-    if (!animate)
-      requestAnimationFrame(
-        () => (track.style.transition = "transform 300ms ease")
-      );
-  }
+    let offset = 0;
+    let last = performance.now();
+    let paused = false;
 
-  btnPrev.addEventListener("click", () => {
-    index = clamp(index - 1);
-    update();
-    restartAutoplay();
-  });
-  btnNext.addEventListener("click", () => {
-    index = clamp(index + 1);
-    update();
-    restartAutoplay();
-  });
-
-  // pointer drag for sliding
-  let dragging = false;
-  let startX = 0;
-  let startTranslate = 0;
-
-  track.addEventListener("pointerdown", (e) => {
-    dragging = true;
-    stopAutoplay();
-    startX = e.clientX;
-    const matrix = window.getComputedStyle(track).transform;
-    let current = 0;
-    if (matrix && matrix !== "none") {
-      const vals = matrix.match(/matrix.*\((.+)\)/)[1].split(", ");
-      current = parseFloat(vals[4]);
+    function step(now) {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (!paused) {
+        offset += SPEED_PX_PER_SEC * dt;
+        if (offset >= loopWidth) offset -= loopWidth;
+        track.style.transform = `translateX(${-offset}px)`;
+      }
+      requestAnimationFrame(step);
     }
-    startTranslate = current;
-    track.style.transition = "none";
-    track.setPointerCapture(e.pointerId);
-  });
 
-  track.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - startX;
-    track.style.transform = `translateX(${startTranslate + dx}px)`;
-  });
+    // pause/resume on hover & focus
+    container.addEventListener("mouseenter", () => (paused = true));
+    container.addEventListener("mouseleave", () => (paused = false));
+    viewport.addEventListener("focusin", () => (paused = true));
+    viewport.addEventListener("focusout", () => (paused = false));
 
-  function endDrag(e) {
-    if (!dragging) return;
-    dragging = false;
-    track.releasePointerCapture?.(e?.pointerId);
-    const dx = (e ? e.clientX : 0) - startX;
-    const step = getStep();
-    const threshold = step * 0.2;
-    if (dx < -threshold) index = clamp(index + 1);
-    else if (dx > threshold) index = clamp(index - 1);
-    update();
-    restartAutoplay();
-  }
-
-  track.addEventListener("pointerup", endDrag);
-  track.addEventListener("pointercancel", endDrag);
-  track.addEventListener("pointerleave", (e) => {
-    if (dragging) endDrag(e);
-  });
-
-  // keyboard support on viewport
-  viewport.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft") {
-      index = clamp(index - 1);
-      update();
-      restartAutoplay();
+    // allow pointer drag to temporarily pause and nudge
+    let dragging = false;
+    let startX = 0;
+    let startOffset = 0;
+    viewport.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      paused = true;
+      startX = e.clientX;
+      startOffset = offset;
+      viewport.setPointerCapture(e.pointerId);
+    });
+    viewport.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      offset = startOffset - dx;
+      // wrap offset
+      offset = ((offset % loopWidth) + loopWidth) % loopWidth;
+      track.style.transform = `translateX(${-offset}px)`;
+    });
+    function endDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      paused = false;
+      viewport.releasePointerCapture?.(e?.pointerId);
     }
-    if (e.key === "ArrowRight") {
-      index = clamp(index + 1);
-      update();
-      restartAutoplay();
-    }
+    viewport.addEventListener("pointerup", endDrag);
+    viewport.addEventListener("pointercancel", endDrag);
+    viewport.addEventListener("pointerleave", endDrag);
+
+    // start animation
+    last = performance.now();
+    requestAnimationFrame(step);
   });
-
-  // autoplay
-  let autoplayTimer = null;
-  function startAutoplay() {
-    stopAutoplay();
-    autoplayTimer = setInterval(() => {
-      index = clamp(index + 1);
-      update();
-    }, AUTOPLAY_DELAY);
-  }
-  function stopAutoplay() {
-    if (autoplayTimer) {
-      clearInterval(autoplayTimer);
-      autoplayTimer = null;
-    }
-  }
-  function restartAutoplay() {
-    stopAutoplay();
-    // kort delay før genstart for at undgå øjeblikkelig hop
-    setTimeout(startAutoplay, AUTOPLAY_DELAY);
-  }
-
-  // pause on hover / focus
-  container.addEventListener("mouseenter", stopAutoplay);
-  container.addEventListener("mouseleave", startAutoplay);
-  viewport.addEventListener("focusin", stopAutoplay);
-  viewport.addEventListener("focusout", restartAutoplay);
-
-  // respond to resize
-  let resizeTimer;
-  window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      index = clamp(index);
-      update(false);
-    }, 100);
-  });
-
-  // start autoplay initially
-  startAutoplay();
-
-  // initial update
-  update(false);
 }
-//
+// ...existing code...
 
 
 // Hent data
