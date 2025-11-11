@@ -1,10 +1,10 @@
 "use strict";
 
 /*
-  Komplett filter-implementering:
-  - Henter allSpil fra remote JSON (juster URL hvis du bruger lokal fil)
-  - Udfylder selects: genre-select, players-select, playtime-select, location-select, difficulty-select, age
-  - Filtrerer ved change/input på relevante elementer
+  Samlet og rettet js:
+  - Én bindUI
+  - Delegated handler for .clear-filter
+  - Debug-logs
 */
 
 let allSpil = [];
@@ -14,7 +14,6 @@ function norm(s) {
   return s === undefined || s === null ? "" : String(s).trim().toLowerCase();
 }
 
-// Basic escaping for templates
 function escapeHtml(str) {
   if (str === undefined || str === null) return "";
   return String(str)
@@ -38,6 +37,7 @@ function bindUI() {
     const el = document.querySelector(sel);
     if (el) el.addEventListener(evt, fn);
   };
+
   on("#search-input", "input", filterSpil);
   on("#genre-select", "change", filterSpil);
   on("#players-select", "change", filterSpil);
@@ -46,13 +46,47 @@ function bindUI() {
   on("#difficulty-select", "change", filterSpil);
   on("#age", "change", filterSpil);
   on("#clear-filters", "click", clearAllFilters);
+
+  // Toggle knap til at vise/skjule filtre
+  const toggleBtn = document.querySelector("#toggle-filters");
+  const panel = document.querySelector("#filters-panel");
+  if (toggleBtn && panel) {
+    toggleBtn.addEventListener("click", () => {
+      const isOpen = panel.classList.toggle("open");
+      panel.classList.toggle("collapsed", !isOpen);
+      panel.setAttribute("aria-hidden", String(!isOpen));
+      toggleBtn.setAttribute("aria-expanded", String(isOpen));
+      toggleBtn.textContent = isOpen ? "Skjul filtre ▴" : "Vis filtre ▾";
+      if (isOpen) {
+        const first = panel.querySelector("select, input");
+        if (first) first.focus();
+      }
+    });
+  }
+
+  // Delegated handler for individual clear buttons (virker selvom knapper indsættes senere)
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest?.(".clear-filter");
+    if (!btn) return;
+    const targetSel = btn.dataset.target;
+    if (!targetSel) return;
+    const target = document.querySelector(targetSel);
+    if (!target) return;
+    if (target.tagName === "SELECT") {
+      target.value = "all";
+      target.dispatchEvent(new Event("change", { bubbles: true }));
+    } else if (target.tagName === "INPUT") {
+      target.value = "";
+      target.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    filterSpil();
+  });
 }
 
 // Hent data
 async function getSpil() {
   try {
-    const url =
-      "https://raw.githubusercontent.com/cederdorff/race/master/data/games.json";
+    const url = "https://raw.githubusercontent.com/cederdorff/race/master/data/games.json";
     const res = await fetch(url);
     if (!res.ok) throw new Error("Hentning fejlede: " + res.status);
     allSpil = await res.json();
@@ -76,7 +110,6 @@ async function getSpil() {
 
 /* ---------- Populate helpers ---------- */
 
-// Håndter mange forskellige strukturer for genre
 function populateGenreSelect() {
   const sel = document.querySelector("#genre-select");
   if (!sel) return;
@@ -103,14 +136,12 @@ function pushGenreVal(map, val) {
   if (!map.has(key)) map.set(key, label);
 }
 
-// Players - prøv at udlede antal fra forskellige felter
 function populatePlayersSelect() {
   const sel = document.querySelector("#players-select");
   if (!sel) return;
   const set = new Set();
   for (const s of allSpil) {
     if (s.players) {
-      // kan være "2-4" eller "2"
       if (typeof s.players === "string" && s.players.includes("-")) {
         const [min] = s.players.split("-").map(n => Number(n));
         if (!isNaN(min)) set.add(String(min));
@@ -123,13 +154,11 @@ function populatePlayersSelect() {
       if (!isNaN(n) && n > 0) set.add(String(n));
     }
   }
-  const nums = Array.from(set).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b);
-  // standard options hvis ingen data
+  const nums = Array.from(set).map(Number).filter(n => !isNaN(n)).sort((a,b)=>a-b);
   const options = nums.length ? nums.map(String) : ["1","2","3","4"];
   sel.innerHTML = `<option value="all">Antal spillere</option>` + options.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("") + `<option value="5+">5+</option>`;
 }
 
-// Playtime - faste bins
 function populatePlaytimeSelect() {
   const sel = document.querySelector("#playtime-select");
   if (!sel) return;
@@ -143,7 +172,6 @@ function populatePlaytimeSelect() {
   sel.innerHTML = bins.map(b => `<option value="${b[0]}">${b[1]}</option>`).join("");
 }
 
-// Location
 function populateLocationSelect() {
   const sel = document.querySelector("#location-select");
   if (!sel) return;
@@ -159,7 +187,6 @@ function populateLocationSelect() {
   sel.innerHTML = `<option value="all">Alle lokationer</option>` + Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`).join("");
 }
 
-// Difficulty
 function populateDifficultySelect() {
   const sel = document.querySelector("#difficulty-select");
   if (!sel) return;
@@ -174,7 +201,6 @@ function populateDifficultySelect() {
   sel.innerHTML = `<option value="all">Sværhedsgrad</option>` + Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`).join("");
 }
 
-// Age
 function populateAgeSelect() {
   const sel = document.querySelector("#age");
   if (!sel) return;
@@ -189,7 +215,6 @@ function populateAgeSelect() {
 
 /* ---------- Filtrering ---------- */
 
-// Hjælper til at matche range/plus options for numbers
 function matchesRangeOption(value, option) {
   if (option === "all") return true;
   if (option.endsWith("+")) {
@@ -200,28 +225,25 @@ function matchesRangeOption(value, option) {
     const [min, max] = option.split("-").map(n => Number(n));
     return value >= min && value <= max;
   }
-  // enkel værdi
   return value === Number(option);
 }
 
 function filterSpil() {
   const q = document.querySelector("#search-input")?.value.trim().toLowerCase() || "";
-  const genreValue = document.querySelector("#genre-select")?.value || "all"; // normalized key
+  const genreValue = document.querySelector("#genre-select")?.value || "all";
   const playersValue = document.querySelector("#players-select")?.value || "all";
   const playtimeValue = document.querySelector("#playtime-select")?.value || "all";
   const locationValue = document.querySelector("#location-select")?.value || "all";
   const difficultyValue = document.querySelector("#difficulty-select")?.value || "all";
   const ageValue = document.querySelector("#age")?.value || "all";
 
-  let result = allSpil.filter(s => {
-    // søg i title/description
+  const result = allSpil.filter(s => {
     if (q) {
       const title = (s.title || s.name || "").toLowerCase();
       const desc = (s.description || "").toLowerCase();
       if (!title.includes(q) && !desc.includes(q)) return false;
     }
 
-    // genre
     if (genreValue !== "all") {
       const raw = s.genre ?? s.genres ?? s.category ?? s.categories;
       let gList = [];
@@ -232,38 +254,31 @@ function filterSpil() {
       if (!gList.includes(genreValue)) return false;
     }
 
-    // players
     if (playersValue !== "all") {
       let p = Number(s.players);
       if (isNaN(p)) {
-        // prøv minPlayers eller parse ranges i string
         if (s.minPlayers) p = Number(s.minPlayers);
-        else if (typeof s.players === "string" && s.players.includes("-")) {
-          p = Number(s.players.split("-")[0]);
-        } else p = 0;
+        else if (typeof s.players === "string" && s.players.includes("-")) p = Number(s.players.split("-")[0]);
+        else p = 0;
       }
       if (!matchesRangeOption(p, playersValue)) return false;
     }
 
-    // playtime
     if (playtimeValue !== "all") {
       const t = Number(s.playtime) || Number(s.duration) || 0;
       if (!matchesRangeOption(t, playtimeValue)) return false;
     }
 
-    // location
     if (locationValue !== "all") {
       const loc = norm(s.location ?? s.store ?? s.place ?? "");
       if (loc !== locationValue) return false;
     }
 
-    // difficulty
     if (difficultyValue !== "all") {
       const diff = norm(s.difficulty ?? s.level ?? "");
       if (diff !== difficultyValue) return false;
     }
 
-    // age
     if (ageValue !== "all") {
       const ageNum = Number(s.min_age ?? s.age ?? 0);
       if (isNaN(ageNum) || ageNum < Number(ageValue)) return false;
@@ -292,8 +307,6 @@ function renderSpilCard(spil, container) {
   const image = spil.image || spil.image_url || "";
   const title = spil.title || spil.name || "Untitled";
   const rating = spil.rating ?? "N/A";
-  const location = spil.location || "-";
-  const shelf = spil.shelf || "-";
   const playtime = spil.playtime ?? spil.duration ?? "-";
   const players = spil.players ?? spil.minPlayers ?? "-";
   const genreLabel = Array.isArray(spil.genre) ? spil.genre.join(", ") : (spil.genre ? String(spil.genre) : "-");
@@ -333,7 +346,6 @@ function showSpilModal(spil) {
   `;
   const closeBtn = dialog.querySelector("#close-dialog");
   if (closeBtn) {
-    // ensure single listener
     closeBtn.replaceWith(closeBtn.cloneNode(true));
     dialog.querySelector("#close-dialog").addEventListener("click", ()=>dialog.close(), { once: true });
   }
@@ -351,5 +363,5 @@ function clearAllFilters() {
     if (el.tagName === "SELECT") el.value = "all";
     else if (el.type === "text") el.value = "";
   }
-  displaySpil(allSpil);
+  filterSpil(allSpil);
 }

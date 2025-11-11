@@ -101,6 +101,10 @@ header {
   text-decoration: none;
 }
 
+.favoritterknap:hover {
+  transform: scale(1.1);
+}
+
 /* =====================
    FILTERBAR STYLES
    ===================== */
@@ -139,7 +143,7 @@ header {
 #search-input,
 #genre-select,
 #sort-select {
-  background:transparent;
+  background: white;
   color: var(--text);
   border: 1px solid var(--secondary);
   border-radius: var(--radius);
@@ -164,10 +168,102 @@ header {
   align-items: right;
 }
 
-#clear-filters {
-  margin-left: auto; /* Skub knappen til højre */
+.clear-btn:hover {
+  background: var(--error);
+  color: white;
+  transform: scale(1.05);
 }
 
+#clear-filters {
+  margin-left: auto; /* Skub knappen til højre */
+  background: whitesmoke;
+  color: var(--text);
+}
+
+#clear-filters:hover {
+  background:#D6746B;
+  color: white;
+  transform: scale(1.1);
+}
+
+.clear-filter {
+  margin-left: 0.5rem;
+  background: whitesmoke;
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+.clear-filter:hover {
+  background:#D6746B;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Toggle-knap */
+.filters-toggle {
+  background: whitesmoke;
+  border: 2px solid darkred;
+  border-color: darkred;
+  padding: 1rem 2rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0.75rem 0;
+  font-family: poppins, sans-serif;
+}
+
+.filters-toggle:hover {
+  transform: scale(1.05);
+} 
+
+/* Collapsed panel (skjult) */
+#filters-panel.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 240ms ease, opacity 180ms ease;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+/* Open panel (synlig) */
+#filters-panel.open {
+  max-height: 800px; /* stor nok til indhold */
+  opacity: 1;
+  transition: max-height 320ms ease, opacity 220ms ease;
+  pointer-events: auto;
+  padding: 0.5rem 0;
+}
+
+/* Småjustering: gør filterbar til flex/grid som før */
+#filters-panel.filterbar,
+.filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.search-btn {
+  background: darkred;
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  display: flex;
+  align-items: right;
+}
 
 /* =====================
    SPIL CARD STYLES
@@ -181,7 +277,7 @@ header {
   overflow: hidden;
   transition: transform 0.2s ease;
   cursor: pointer;
-  border:darkred;
+  border: solid darkred;
   border-width: 2px;
   padding: 30px;
 }

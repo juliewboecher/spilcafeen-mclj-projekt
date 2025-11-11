@@ -23,46 +23,68 @@
         
 
         <!-- Filter bar til at søge efter specifik spil -->
-     
+    
 
-      <div class="filterbar">
+      <!-- Toggle-knap til filtre -->
+      <button id="toggle-filters" aria-expanded="false" aria-controls="filters-panel" class="filters-toggle">Vis filtre ▾</button>
       
-
-        <select id="genre-select">
-          <option value="all">Alle genrer</option>
-          <!-- Genrer indsættes dynamisk via JavaScript -->
-        </select>
-
-        <select id="players-select">
-          <option value="all">Antal spillere</option>
-          <!-- Platforme indsættes dynamisk via JavaScript -->
-        </select>
-
-         <select id="location-select">
-          <option value="all">Lokation</option>
-          <!-- Lokationer indsættes dynamisk via JavaScript -->
-        </select>
-
-        <select id="difficulty-select">
-          <option value="all">Sværhedsgrad</option>
-          <!-- Sværhedsgrader indsættes dynamisk via JavaScript -->
-        </select>
-
-        <select id="playtime-select">
-          <option value="all">Spilletid</option>
-          <!-- Spilletider indsættes dynamisk via JavaScript -->
-        </select>
-
-        <select id="age">
-          <option value="all">Alder</option>
-          <!-- Aldersgrupper indsættes dynamisk via JavaScript -->
-        </select>
-
-      </div> 
-         <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
+       <!-- Filter-panelet (start skjult) -->
+      <div id="filters-panel" class="filterbar collapsed" aria-hidden="true">
+        
+        <div class="filter-item">
+          <select id="genre-select">
+            <option value="all">Alle genrer</option>
+          </select>
+          <button type="button" class="clear-filter" data-target="#genre-select" aria-label="Ryd genre">✕</button>
+        </div>
       
+        <div class="filter-item">
+          <select id="players-select">
+            <option value="all">Antal spillere</option>
+          </select>
+          <button type="button" class="clear-filter" data-target="#players-select" aria-label="Ryd antal spillere">✕</button>
+        </div>
 
+        <div class="filter-item">
+          <select id="playtime-select">
+            <option value="all">Spilletid</option>
+          </select>
+          <button type="button" class="clear-filter" data-target="#playtime-select" aria-label="Ryd spilletid">✕</button>
+        </div>
+
+        <div class="filter-item">
+          <select id="location-select">
+            <option value="all">Lokation</option>
+          </select>
+          <button type="button" class="clear-filter" data-target="#location-select" aria-label="Ryd lokation">✕</button>
+        </div>
+
+        <div class="filter-item">
+          <select id="difficulty-select">
+            <option value="all">Sværhedsgrad</option>
+          </select>
+          <button type="button" class="clear-filter" data-target="#difficulty-select" aria-label="Ryd sværhedsgrad">✕</button>
+        </div>
+
+        <div class="filter-item">
+          <select id="age">
+            <option value="all">Alder</option>
+          </select>
+          <button type="button" class="clear-filter" data-target="#age" aria-label="Ryd alder">✕</button>
+        </div>
       </div>
+
+       
+     <div class="search-bar">
+        <button id="search-btn" type="button" aria-label="Søg">Søg</button>
+      </div>
+      <div class="filter-item">
+       <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
+       </div>
+    
+      
+
+     
 
 
        <!-- Spil grid -->
