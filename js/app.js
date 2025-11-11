@@ -83,6 +83,218 @@ function bindUI() {
   });
 }
 
+// ...existing code...
+function createTop10Carousel() {
+  const AUTOPLAY_DELAY = 3000; // ms mellem slides
+  const top10 = [...allSpil]
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    .slice(0, 10);
+  if (!top10.length) return;
+
+  if (document.querySelector("#top-carousel"))
+    document.querySelector("#top-carousel").remove();
+
+  const container = document.createElement("section");
+  container.id = "top-carousel";
+  container.className = "carousel";
+
+  container.innerHTML = `
+   <button class="carousel-btn prev" aria-label="Forrige">‹</button>
+   <div class="carousel-viewport" tabindex="0" aria-roledescription="carousel">
+     <div class="carousel-track"></div>
+   </div>
+   <button class="carousel-btn next" aria-label="Næste">›</button>
+ `;
+
+  const track = container.querySelector(".carousel-track");
+  const viewport = container.querySelector(".carousel-viewport");
+
+  for (const s of top10) {
+    const title = s.title || s.name || "Untitled";
+    const img = s.image || s.image_url || "";
+    const rating = s.rating ?? "N/A";
+    const card = document.createElement("article");
+    card.className = "carousel-card";
+    card.innerHTML = `
+     <img src="${escapeHtml(img)}" alt="${escapeHtml(
+      title
+    )}" class="carousel-poster">
+     <div class="carousel-info">
+       <h4>${escapeHtml(title)}</h4>
+       <div class="carousel-meta">⭐ ${escapeHtml(String(rating))}</div>
+     </div>
+   `;
+    card.addEventListener("click", () => showSpilModal(s));
+    track.appendChild(card);
+  }
+
+  const spilList = document.querySelector("#spil-list");
+  if (spilList) spilList.before(container);
+  else document.querySelector("main").prepend(container);
+
+  // sliding logic (transform)
+  const btnPrev = container.querySelector(".carousel-btn.prev");
+  const btnNext = container.querySelector(".carousel-btn.next");
+  const cards = Array.from(track.children);
+
+  track.style.display = "flex";
+  track.style.transition = "transform 300ms ease";
+  let index = 0;
+
+  function getGap() {
+    const style = getComputedStyle(track);
+    return parseFloat(style.gap || "0") || 0;
+  }
+
+  function getStep() {
+    const first = cards[0];
+    const w = first ? first.getBoundingClientRect().width : 200;
+    return w + getGap();
+  }
+
+  function visibleCount() {
+    const step = getStep();
+    return Math.max(1, Math.floor(viewport.clientWidth / step));
+  }
+
+  function maxIndex() {
+    return Math.max(0, cards.length - visibleCount());
+  }
+
+  function clamp(i) {
+    return Math.min(Math.max(0, i), maxIndex());
+  }
+
+  function update(animate = true) {
+    const step = getStep();
+    if (!animate) track.style.transition = "none";
+    else track.style.transition = "transform 300ms ease";
+    const x = -index * step;
+    track.style.transform = `translateX(${x}px)`;
+    btnPrev.disabled = index === 0;
+    btnNext.disabled = index === maxIndex();
+    if (!animate)
+      requestAnimationFrame(
+        () => (track.style.transition = "transform 300ms ease")
+      );
+  }
+
+  btnPrev.addEventListener("click", () => {
+    index = clamp(index - 1);
+    update();
+    restartAutoplay();
+  });
+  btnNext.addEventListener("click", () => {
+    index = clamp(index + 1);
+    update();
+    restartAutoplay();
+  });
+
+  // pointer drag for sliding
+  let dragging = false;
+  let startX = 0;
+  let startTranslate = 0;
+
+  track.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    stopAutoplay();
+    startX = e.clientX;
+    const matrix = window.getComputedStyle(track).transform;
+    let current = 0;
+    if (matrix && matrix !== "none") {
+      const vals = matrix.match(/matrix.*\((.+)\)/)[1].split(", ");
+      current = parseFloat(vals[4]);
+    }
+    startTranslate = current;
+    track.style.transition = "none";
+    track.setPointerCapture(e.pointerId);
+  });
+
+  track.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    track.style.transform = `translateX(${startTranslate + dx}px)`;
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    track.releasePointerCapture?.(e?.pointerId);
+    const dx = (e ? e.clientX : 0) - startX;
+    const step = getStep();
+    const threshold = step * 0.2;
+    if (dx < -threshold) index = clamp(index + 1);
+    else if (dx > threshold) index = clamp(index - 1);
+    update();
+    restartAutoplay();
+  }
+
+  track.addEventListener("pointerup", endDrag);
+  track.addEventListener("pointercancel", endDrag);
+  track.addEventListener("pointerleave", (e) => {
+    if (dragging) endDrag(e);
+  });
+
+  // keyboard support on viewport
+  viewport.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") {
+      index = clamp(index - 1);
+      update();
+      restartAutoplay();
+    }
+    if (e.key === "ArrowRight") {
+      index = clamp(index + 1);
+      update();
+      restartAutoplay();
+    }
+  });
+
+  // autoplay
+  let autoplayTimer = null;
+  function startAutoplay() {
+    stopAutoplay();
+    autoplayTimer = setInterval(() => {
+      index = clamp(index + 1);
+      update();
+    }, AUTOPLAY_DELAY);
+  }
+  function stopAutoplay() {
+    if (autoplayTimer) {
+      clearInterval(autoplayTimer);
+      autoplayTimer = null;
+    }
+  }
+  function restartAutoplay() {
+    stopAutoplay();
+    // kort delay før genstart for at undgå øjeblikkelig hop
+    setTimeout(startAutoplay, AUTOPLAY_DELAY);
+  }
+
+  // pause on hover / focus
+  container.addEventListener("mouseenter", stopAutoplay);
+  container.addEventListener("mouseleave", startAutoplay);
+  viewport.addEventListener("focusin", stopAutoplay);
+  viewport.addEventListener("focusout", restartAutoplay);
+
+  // respond to resize
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      index = clamp(index);
+      update(false);
+    }, 100);
+  });
+
+  // start autoplay initially
+  startAutoplay();
+
+  // initial update
+  update(false);
+}
+//
+
+
 // Hent data
 async function getSpil() {
   try {
@@ -101,6 +313,9 @@ async function getSpil() {
     populateLocationSelect();
     populateDifficultySelect();
     populateAgeSelect();
+
+    // Opret karusellen før eller efter display — sørg for at kalde funktionen
+    createTop10Carousel();
 
     // Vis alt ved start
     displaySpil(allSpil);

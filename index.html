@@ -27,7 +27,14 @@
     
 
       <!-- Toggle-knap til filtre -->
-      <button id="toggle-filters" aria-expanded="false" aria-controls="filters-panel" class="filters-toggle">Vis filtre ▾</button>
+
+      <div class="filters-header">
+        <button id="toggle-filters" aria-expanded="false" aria-controls="filters-panel" class="filters-toggle">
+        Vis filtre ▾
+        </button>
+        <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
+      </div>
+
       
        <!-- Filter-panelet (start skjult) -->
       <div id="filters-panel" class="filterbar collapsed" aria-hidden="true">
@@ -76,7 +83,6 @@
         
         <button id="search-btn" type="button" aria-label="Søg">Søg</button>
         
-        <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
       </div>
 
             
