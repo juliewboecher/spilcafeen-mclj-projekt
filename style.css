@@ -1,4 +1,3 @@
-
 :root {
   /* Colors */
   --primary: #264c59;
@@ -25,8 +24,7 @@
   --radius: 1rem;
   --transition: 250ms ease;
   /* Sticky footer: reserver plads og fastgør footer til bunden */
-   --footer-height: 64px;
-   
+  --footer-height: 64px;
 }
 
 /* =====================
@@ -40,17 +38,17 @@
 
 /* HER ÆNDRER VI BAGGRUNDEN */
 body {
- font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
-   sans-serif;
- font-size: 1rem;
- line-height: 1.6;
- background-image: url("img/storbaggrund.svg");
- background-size: 190%;
- background-position: center 80px;
- background-repeat: no-repeat;
- background-attachment: fixed;
- color: var(--text);
- min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  background-image: url("img/baggrundframe.svg");
+  background-size: 190%;
+  background-position: center 80px;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
 }
 
 /* =====================
@@ -59,20 +57,19 @@ body {
 main {
   max-width: min(1400px, 95vw);
   margin: 0 auto;
-  padding: clamp(5rem, 10vw, 8rem) 1rem 2rem;
-   /* behold eksisterende paddings, men sørg for ekstra plads i bunden */
+  padding: clamp(5rem, 2vw, 8rem) 1rem 2rem;
+  /* behold eksisterende paddings, men sørg for ekstra plads i bunden */
   padding-bottom: calc(2rem + var(--footer-height));
 }
 
 header {
-  position:sticky;
+  position:relative;
   top: 0;
   left: 0;
   width: 100%;
-  background-color: whitesmoke;
+  background-color: white;
   color: var(--text);
   padding: 0.2rem 1.2rem;
-  box-shadow: var(--shadow);
   z-index: 1000;
   display: grid;
   grid-template-columns: 0.5fr auto 0.5fr;
@@ -93,9 +90,10 @@ header h1 img {
 }
 
 header .search-bar {
-  grid-column: 1;
-  display: flex;
-  justify-content: flex-start;
+  grid-column: 2;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 header .favoritterknap {
@@ -115,11 +113,100 @@ header .favoritterknap:hover img {
   transform: scale(1.1);
 }
 
+
+/* Header layout: logo | centreret nav | højre kolonne */
+header {
+  /* overskriv tidligere grid-opsætning så layoutet matcher designet */
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1.5rem !important; /* juster tallet efter behov */
+  padding-bottom: 0.6rem;         /* valgfri: balancer bund-padding */
+}
+
+/* Logo */
+.logo {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 1rem;
+}
+.logo img {
+  min-height: 120px;
+  max-height: 120px; /* juster størrelse efter behov */
+  width: auto;
+}
+
+/* Centreret navigation */
+.main-nav {
+  grid-column: 3;
+  display: flex;
+  justify-content: flex-start;
+}
+.main-nav ul {
+  display: flex;
+  gap: 2.5rem;
+  list-style: none;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+.main-nav a {
+  text-decoration: none;
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+/* Højre kolonne: Spiloversigt + In English */
+.right-links {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.25rem;
+  padding-right: 1rem;
+}
+.right-links .spiloversigt {
+  font-size: 1.6rem;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 3px solid darkred;
+  padding-bottom: 0.25rem;
+}
+.right-links .in-english {
+  font-size: 1rem;
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+/* Responsivt: slå navigation sammen under 700px */
+@media (max-width: 699px) {
+  header {
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem;
+  }
+  .right-links { grid-column: 2; flex-direction: row; gap: 1rem; justify-content: flex-end; }
+  .main-nav { display: none; } /* eller lav hamburger-menu */
+  .logo img { max-height: 90px; }
+}
+
+/* Responsivt: skaler logo på små skærme */
+@media (max-width: 699px) {
+  .logo img,
+  header h1 img {
+    max-height: 120px;
+  }
+}
+/*Slut header fra spilcafeen.dk */
+
 #top {
   scroll-margin-top: 100px; /* juster efter headerens højde */
   scroll-behavior: smooth;
   margin: -10px 0 0 0; /* juster efter headerens højde */
-
 }
 
 /* fjern link-styling for skip-to-top */
@@ -136,7 +223,24 @@ header .favoritterknap:hover img {
 /* =====================
    FILTERBAR STYLES
    ===================== */
-.filterbar {    
+
+   
+
+/* Gør knapperne til en række */
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem; /* meget lille afstand mellem knapperne */
+  margin-bottom: 0.75rem;
+}
+
+/* fjern auto-margin fra clear-knappen */
+#clear-filters {
+  display: none; /* skjult fra start */
+}
+
+.filterbar {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
@@ -158,26 +262,27 @@ header .favoritterknap:hover img {
   border: 2px solid var(--primary);
   border-radius: var(--radius);
   font-size: 1rem;
-}   
+}
 
 #search-bar {
   max-width: 400px;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Ikoner ud til hver side */;
+  justify-content: center; /* Ikoner ud til hver side */
 }
 
 .search-bar {
+  grid-column: 2;
   width: 100%;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
+  align-items: center;
   margin-top: 1rem;
 }
 
 #genre-select {
   max-width: 200px;
 }
-
 
 /* STYLING AF FILTER-BAR */
 #search-input,
@@ -191,11 +296,15 @@ header .favoritterknap:hover img {
   font-size: 1rem;
   transition: var(--transition);
   box-shadow: var(--shadow);
+  flex: 1 1 auto;
+  min-width: 20px;
+  max-width: 700px;
+
 }
 
 /* RYD KNAP */
 .clear-btn {
-  background:darkred;
+  background: darkred;
   color: white;
   border: none;
   border-radius: var(--radius);
@@ -214,16 +323,16 @@ header .favoritterknap:hover img {
   transform: scale(1.05);
 }
 
-.filters-header {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
+#clear-filters {
+  margin-left: auto; /* Skub knappen til højre */
+  background: whitesmoke;
+  color: var(--text);
+  align-self: center;
+  margin-top: 0;
 }
 
-
 #clear-filters:hover {
-  background:#D6746B;
+  background: #d6746b;
   color: white;
   transform: scale(1.1);
 }
@@ -241,7 +350,7 @@ header .favoritterknap:hover img {
   transition: var(--transition);
 }
 .clear-filter:hover {
-  background:#D6746B;
+  background: #d6746b;
   color: white;
   transform: scale(1.1);
 }
@@ -258,11 +367,12 @@ header .favoritterknap:hover img {
   color: var(--text);
   margin: 0.75rem 0;
   font-family: poppins, sans-serif;
+  
 }
 
 .filters-toggle:hover {
   transform: scale(1.05);
-} 
+}
 
 /* Collapsed panel (skjult) */
 #filters-panel.collapsed {
@@ -273,6 +383,7 @@ header .favoritterknap:hover img {
   padding-top: 0;
   padding-bottom: 0;
   pointer-events: none;
+  justify-content: flex-end;
 }
 
 /* Open panel (synlig) */
@@ -281,7 +392,10 @@ header .favoritterknap:hover img {
   opacity: 1;
   transition: max-height 320ms ease, opacity 220ms ease;
   pointer-events: auto;
+  display: flex;
   padding: 0.5rem 0;
+  align-items: flex-end;
+  justify-content: flex-start;
 }
 
 /* Småjustering: gør filterbar til flex/grid som før */
@@ -293,10 +407,12 @@ header .favoritterknap:hover img {
   align-items: center;
 }
 
+
 .search-bar {
   width: 100%;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
+  align-items: center;
   margin-top: 1rem;
 }
 
@@ -335,27 +451,24 @@ header .favoritterknap:hover img {
   padding: 30px;
 }
 .heart-icon {
- position: absolute;
- top: 8px;
- right: 8px;
- width: 24px; /* juster størrelsen som du vil */
- height: 24px;
- cursor: pointer;
- transition: transform 0.2s ease, opacity 0.2s ease;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px; /* juster størrelsen som du vil */
+  height: 24px;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
-
 
 .heart-icon:hover {
- transform: scale(1.1);
- opacity: 0.8;
+  transform: scale(1.1);
+  opacity: 0.8;
 }
-
 
 .spil-card:focus {
-  outline:darkred;
+  outline: darkred;
   outline-offset: 2px;
 }
-
 
 .spil-poster {
   width: 100%;
@@ -382,11 +495,29 @@ header .favoritterknap:hover img {
   flex-direction: column;
   border-radius: 10px;
   border-style: solid;
-  background-color:whitesmoke;
+  background-color: whitesmoke;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.219);
   overflow: hidden;
   border: 2px solid darkred;
   width: 100%; /* fylder kolonnen */
+}
+
+/* indholdet under billedet skal kunne fylde ud */
+.spil-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1; /* <– så det fylder resten af kortet */
+}
+
+/* beskrivelsen må gerne bruge pladsen */
+.spil-info .description {
+  flex: 1; /* <– fyld ud, så knappen kan blive i bunden */
+}
+
+/* knappen skal ned i bunden */
+.details-btn {
+  margin-top: auto;
 }
 
 /* Gør billedhøjden mindre når kortene står ved siden af hinanden */
@@ -408,18 +539,16 @@ header .favoritterknap:hover img {
 
 /* ...existing code... */
 
-
-
 .details-btn {
   margin-top: 8px;
   padding: 0.5rem 1rem;
-  background-color:whitesmoke;
-  color:#000101;
+  background-color: whitesmoke;
+  color: #000101;
   border: 2px solid darkred;
   border-color: darkred;
   border-radius: var(--radius);
   cursor: pointer;
-  font-size: 0,5rem;
+  font-size: 0, 5rem;
   transition: all 0.3s ease;
 }
 
@@ -435,13 +564,12 @@ header .favoritterknap:hover img {
 
 /* Make footer sticky to viewport bottom */
 
-
-
 /* Juster på små skærme hvis nødvendigt */
 @media (max-width: 480px) {
-  :root { --footer-height: 56px; }
+  :root {
+    --footer-height: 56px;
+  }
 }
-
 
 /* =====================
    Spil DIALOG
@@ -500,21 +628,22 @@ dialog#spil-dialog::backdrop {
   max-height: 90vh;
 }
 
-
-
-
-
-
+/* Sørg for at alle kort i grid'et strækkes lige højt */
+.spil-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+  align-items: stretch; /* <– i stedet for start */
+}
 
 /* =====================
    CAROUSEL STYLES
    ===================== */
 /* Carousel: scroll-snap og scrollable viewport */
 
-
 #top-carousel.carousel {
   position: relative; 
-  padding-top: 1.4rem; /* plads til titel */
+  padding-top: 2rem; /* plads til titel */
   display: flex; /* brug flexbox til layout */
   align-items: center; /* centrer vertikalt */
   gap: 0.5rem; /* afstand mellem elementer */
@@ -556,17 +685,24 @@ dialog#spil-dialog::backdrop {
 
 .carousel-card {
  scroll-snap-align: start;
- min-width: 200px;
- max-width: 220px;
+ min-width: 300px;
+ max-width: 350px;
  flex: 0 0 auto;
  background: #fff;
- border-radius: 8px;
+ border-radius: 400px;
+ border: 5px solid whitesmoke;
  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
  overflow: hidden;
  cursor: pointer;
  display: flex;
  flex-direction: column;
- padding: 10px;
+ padding: 40px;
+}
+
+.carousel-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transform: scale(1.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .carousel-poster { width: 100%; height: 120px; object-fit: cover; display: block; }
@@ -585,4 +721,5 @@ dialog#spil-dialog::backdrop {
   padding-left: 0.25rem;
   color: var(--text);
 }
+
 

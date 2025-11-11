@@ -25,10 +25,48 @@
  </head>
  <body>
    <header>
-     <h1>Mine Favoritter</h1>
+     <header>
+  <div class="logo">
+    <a href="/"><img src="https://images.squarespace-cdn.com/content/v1/61fd2c9026a58c435d260f4c/1af90772-e642-4309-a2cb-f4161e36855e/SC-logo-2023-transparant-BG+Small+Crop.png?format=1500w" alt="Spilcafeen logo"></a>
+  </div>
+
+  <nav class="main-nav" aria-label="Hovednavigation">
+    <ul>
+      <li><a href="#reservér">Reservér Bord</a></li>
+      <li><a href="#membership">Membership</a></li>
+      <li><a href="#menu">Menu</a></li>
+      <li><a href="#spilguide">Spilguide</a></li>
+
+  <div class="right-links">
+    <a class="spiloversigt" href="#spiloversigt">Spiloversigt</a>
+    <a class="in-english" href="/en">In English</a>
+  </div>
+  <a href="favoritter.html" class="favoritterknap"
+        ><img src="img/fyldthjerte.png" alt="fyldt hjerte" />
+      </a>
+      <p></p>
+    </ul>
+  </nav>
+
+    </header>
    </header>
 
 
    <main>
+     <h1>Mine Favoritter</h1>
      <!-- Container med samme CSS som index.html -->
      <section id="favorit-list" class="spil-grid"></section>
+   </main>
+
+
+   <!-- SPIL Detail Modal (samme som index.html) -->
+   <dialog id="spil-dialog">
+     <form method="dialog">
+       <button id="close-dialog" aria-label="Close">✕</button>
+       <div id="dialog-content">
+         <!-- Spil details bliver injiceret via JavaScript -->
+       </div>
+     </form>
+   </dialog>
+ </body>
+</html>

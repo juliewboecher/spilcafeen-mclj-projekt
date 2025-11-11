@@ -28,8 +28,28 @@ window.addEventListener("DOMContentLoaded", initApp);
 
 function initApp() {
   console.log("initApp: starter");
+  wrapFilterButtons(); // ← flytter knapperne
   bindUI();
   getSpil();
+}
+
+function wrapFilterButtons() {
+  const toggleBtn = document.querySelector("#toggle-filters");
+  const clearBtn = document.querySelector("#clear-filters");
+  const filtersPanel = document.querySelector("#filters-panel");
+
+  if (!toggleBtn || !clearBtn) return;
+
+  // Lav en container til knapperne
+  const header = document.createElement("div");
+  header.className = "filters-header";
+
+  // Indsæt den lige før filter-panelet
+  filtersPanel.parentNode.insertBefore(header, filtersPanel);
+
+  // Flyt knapperne ind i containeren
+  header.appendChild(toggleBtn);
+  header.appendChild(clearBtn);
 }
 
 function bindUI() {
@@ -57,6 +77,12 @@ function bindUI() {
       panel.setAttribute("aria-hidden", String(!isOpen));
       toggleBtn.setAttribute("aria-expanded", String(isOpen));
       toggleBtn.textContent = isOpen ? "Skjul filtre ▴" : "Vis filtre ▾";
+
+      const clearBtn = document.querySelector("#clear-filters");
+      if (clearBtn) {
+        clearBtn.style.display = isOpen ? "inline-flex" : "none";
+      }
+
       if (isOpen) {
         const first = panel.querySelector("select, input");
         if (first) first.focus();
@@ -83,7 +109,7 @@ function bindUI() {
   });
 }
 
-// ...existing code...
+// Opret top 10 carousel
 function createTop10Carousel() {
   const SPEED_PX_PER_SEC = 40; // juster hastighed (px/s)
   const top10 = [...allSpil]
@@ -115,7 +141,9 @@ function createTop10Carousel() {
     const card = document.createElement("article");
     card.className = "carousel-card";
     card.innerHTML = `
-      <img src="${escapeHtml(img)}" alt="${escapeHtml(title)}" class="carousel-poster">
+      <img src="${escapeHtml(img)}" alt="${escapeHtml(
+      title
+    )}" class="carousel-poster">
       <div class="carousel-info">
         <h4>${escapeHtml(title)}</h4>
         <div class="carousel-meta">⭐ ${escapeHtml(String(rating))}</div>
@@ -152,13 +180,17 @@ function createTop10Carousel() {
     track.style.willChange = "transform";
 
     // measure width of one loop (original set)
-    const originalWidth = originalChildren.reduce((sum, el) => {
-      const r = el.getBoundingClientRect();
-      return sum + r.width;
-    }, 0) + (originalChildren.length - 1) * parseFloat(getComputedStyle(track).gap || "0");
+    const originalWidth =
+      originalChildren.reduce((sum, el) => {
+        const r = el.getBoundingClientRect();
+        return sum + r.width;
+      }, 0) +
+      (originalChildren.length - 1) *
+        parseFloat(getComputedStyle(track).gap || "0");
 
     // if zero width fallback
-    const loopWidth = originalWidth > 0 ? originalWidth : track.scrollWidth / 2 || 800;
+    const loopWidth =
+      originalWidth > 0 ? originalWidth : track.scrollWidth / 2 || 800;
 
     let offset = 0;
     let last = performance.now();
@@ -215,8 +247,6 @@ function createTop10Carousel() {
     requestAnimationFrame(step);
   });
 }
-// ...existing code...
-
 
 // Hent data
 async function getSpil() {
