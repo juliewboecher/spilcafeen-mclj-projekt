@@ -1,3 +1,4 @@
+
 :root {
   /* Colors */
   --primary: #264c59;
@@ -39,21 +40,17 @@
 
 /* HER ÆNDRER VI BAGGRUNDEN */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
-    sans-serif;
-  font-size: 1rem;
-  line-height: 1.6;
-  background-image: url("img/logofacegentaget.png");
-  color: var(--text);
-  min-height: 100vh;
-}
-
-/* 2) Single image fill (cover) — én baggrund fylder hele elementet */
-.body-cover {
-  background-image: url("img/logofacegentaget.png");
-  background-repeat: repeat;
-  background-position: center;
-  background-size: cover;                   /* fylder elementet uden at strække proportioner */
+ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+   sans-serif;
+ font-size: 1rem;
+ line-height: 1.6;
+ background-image: url("img/storbaggrund.svg");
+ background-size: 190%;
+ background-position: center 80px;
+ background-repeat: no-repeat;
+ background-attachment: fixed;
+ color: var(--text);
+ min-height: 100vh;
 }
 
 /* =====================
@@ -74,13 +71,48 @@ header {
   width: 100%;
   background-color: whitesmoke;
   color: var(--text);
-  padding: 1rem 2rem;
+  padding: 0.2rem 1.2rem;
   box-shadow: var(--shadow);
   z-index: 1000;
-  display: flex;
+  display: grid;
+  grid-template-columns: 0.5fr auto 0.5fr;
   align-items: center;
-  justify-content: space-between;
-  gap: 60vh;
+  gap: 0.7rem;
+}
+
+header h1 {
+  grid-column: 2;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+header h1 img {
+  max-height: 160px;
+  width: auto;
+}
+
+header .search-bar {
+  grid-column: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+header .favoritterknap {
+  grid-column: 3;
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 1.5rem;
+}
+
+header .favoritterknap img {
+  transition: transform 0.2s ease;
+  max-height: 50px;
+  width: auto;
+}
+
+header .favoritterknap:hover img {
+  transform: scale(1.1);
 }
 
 #top {
@@ -101,10 +133,6 @@ header {
   text-decoration: none;
 }
 
-.favoritterknap:hover {
-  transform: scale(1.1);
-}
-
 /* =====================
    FILTERBAR STYLES
    ===================== */
@@ -114,6 +142,12 @@ header {
   gap: 1rem;
   margin-bottom: 1.5rem;
   align-items: center;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .filterbar input,
@@ -128,10 +162,16 @@ header {
 
 #search-bar {
   max-width: 400px;
-   display: flex;
+  display: flex;
   align-items: center;
   justify-content: space-between; /* Ikoner ud til hver side */;
+}
 
+.search-bar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1rem;
 }
 
 #genre-select {
@@ -178,6 +218,8 @@ header {
   margin-left: auto; /* Skub knappen til højre */
   background: whitesmoke;
   color: var(--text);
+  align-self: center;
+  margin-top: 0;
 }
 
 #clear-filters:hover {
@@ -251,42 +293,63 @@ header {
   align-items: center;
 }
 
-.search-btn {
-  background: darkred;
-  color: white;
-  border: none;
+.search-bar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+
+#search-btn {
+  background: white;
+  color: var(--text);
+  border: 2px solid darkred;
   border-radius: var(--radius);
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: var(--transition);
-  display: flex;
-  align-items: right;
+  min-width: 120px;
+}
+
+#search-btn:hover {
+  background: darkred;
+  color: white;
+  transform: scale(1.05);
 }
 
 /* =====================
    SPIL CARD STYLES
    ===================== */
 .spil-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   border-radius: 10px;
   background-color: darkred;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.219);
   overflow: hidden;
-  transition: transform 0.2s ease;
-  cursor: pointer;
   border: solid darkred;
   border-width: 2px;
   padding: 30px;
 }
-
-/* Tilføj til din app.css */
-.spil-card {
-  cursor: pointer;
-  transition: transform 0.2s ease;
+.heart-icon {
+ position: absolute;
+ top: 8px;
+ right: 8px;
+ width: 24px; /* juster størrelsen som du vil */
+ height: 24px;
+ cursor: pointer;
+ transition: transform 0.2s ease, opacity 0.2s ease;
 }
+
+
+.heart-icon:hover {
+ transform: scale(1.1);
+ opacity: 0.8;
+}
+
 
 .spil-card:focus {
   outline:darkred;
@@ -318,13 +381,11 @@ header {
   display: flex;
   flex-direction: column;
   border-radius: 10px;
-  border-style: outset;
+  border-style: solid;
   background-color:whitesmoke;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.219);
   overflow: hidden;
-  transition: transform 0.2s ease;
-  cursor: pointer;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid darkred;
   width: 100%; /* fylder kolonnen */
 }
 
@@ -359,7 +420,17 @@ header {
   border-radius: var(--radius);
   cursor: pointer;
   font-size: 0,5rem;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.details-btn:hover {
+  background-color: darkred;
+  color: whitesmoke;
+  transform: scale(1.05);
+}
+
+.details-btn:active {
+  transform: scale(0.98);
 }
 
 /* Make footer sticky to viewport bottom */

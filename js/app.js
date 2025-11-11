@@ -1,10 +1,10 @@
 "use strict";
 
 /*
-  Samlet og rettet js:
-  - Én bindUI
-  - Delegated handler for .clear-filter
-  - Debug-logs
+ Samlet og rettet js:
+ - Én bindUI
+ - Delegated handler for .clear-filter
+ - Debug-logs
 */
 
 let allSpil = [];
@@ -86,7 +86,8 @@ function bindUI() {
 // Hent data
 async function getSpil() {
   try {
-    const url = "https://raw.githubusercontent.com/cederdorff/race/master/data/games.json";
+    const url =
+      "https://raw.githubusercontent.com/cederdorff/race/master/data/games.json";
     const res = await fetch(url);
     if (!res.ok) throw new Error("Hentning fejlede: " + res.status);
     allSpil = await res.json();
@@ -124,12 +125,22 @@ function populateGenreSelect() {
   const entries = Array.from(map.entries()).sort((a, b) =>
     a[1].localeCompare(b[1], undefined, { sensitivity: "base" })
   );
-  sel.innerHTML = `<option value="all">Alle genrer</option>` + entries.map(([k, v]) => `<option value="${escapeHtml(k)}">${escapeHtml(v)}</option>`).join("");
-  console.log("🎭 Genres:", entries.map(e => e[1]));
+  sel.innerHTML =
+    `<option value="all">Alle genrer</option>` +
+    entries
+      .map(
+        ([k, v]) => `<option value="${escapeHtml(k)}">${escapeHtml(v)}</option>`
+      )
+      .join("");
+  console.log(
+    "🎭 Genres:",
+    entries.map((e) => e[1])
+  );
 }
 function pushGenreVal(map, val) {
   if (val === null || val === undefined) return;
-  if (typeof val === "object") val = val.name ?? val.title ?? val.value ?? JSON.stringify(val);
+  if (typeof val === "object")
+    val = val.name ?? val.title ?? val.value ?? JSON.stringify(val);
   const label = String(val).trim();
   if (!label) return;
   const key = norm(label);
@@ -143,7 +154,7 @@ function populatePlayersSelect() {
   for (const s of allSpil) {
     if (s.players) {
       if (typeof s.players === "string" && s.players.includes("-")) {
-        const [min] = s.players.split("-").map(n => Number(n));
+        const [min] = s.players.split("-").map((n) => Number(n));
         if (!isNaN(min)) set.add(String(min));
       } else {
         const n = Number(s.players);
@@ -154,22 +165,32 @@ function populatePlayersSelect() {
       if (!isNaN(n) && n > 0) set.add(String(n));
     }
   }
-  const nums = Array.from(set).map(Number).filter(n => !isNaN(n)).sort((a,b)=>a-b);
-  const options = nums.length ? nums.map(String) : ["1","2","3","4"];
-  sel.innerHTML = `<option value="all">Antal spillere</option>` + options.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("") + `<option value="5+">5+</option>`;
+  const nums = Array.from(set)
+    .map(Number)
+    .filter((n) => !isNaN(n))
+    .sort((a, b) => a - b);
+  const options = nums.length ? nums.map(String) : ["1", "2", "3", "4"];
+  sel.innerHTML =
+    `<option value="all">Antal spillere</option>` +
+    options
+      .map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`)
+      .join("") +
+    `<option value="5+">5+</option>`;
 }
 
 function populatePlaytimeSelect() {
   const sel = document.querySelector("#playtime-select");
   if (!sel) return;
   const bins = [
-    ["all","Spilletid"],
-    ["0-15","<15 min"],
-    ["15-30","15-30 min"],
-    ["30-60","30-60 min"],
-    ["60+","60+ min"]
+    ["all", "Spilletid"],
+    ["0-15", "<15 min"],
+    ["15-30", "15-30 min"],
+    ["30-60", "30-60 min"],
+    ["60+", "60+ min"],
   ];
-  sel.innerHTML = bins.map(b => `<option value="${b[0]}">${b[1]}</option>`).join("");
+  sel.innerHTML = bins
+    .map((b) => `<option value="${b[0]}">${b[1]}</option>`)
+    .join("");
 }
 
 function populateLocationSelect() {
@@ -184,7 +205,14 @@ function populateLocationSelect() {
     const key = norm(label);
     if (!map.has(key)) map.set(key, label);
   }
-  sel.innerHTML = `<option value="all">Alle lokationer</option>` + Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`).join("");
+  sel.innerHTML =
+    `<option value="all">Alle lokationer</option>` +
+    Array.from(map.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(
+        ([k, l]) => `<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`
+      )
+      .join("");
 }
 
 function populateDifficultySelect() {
@@ -198,7 +226,14 @@ function populateDifficultySelect() {
     const key = norm(label);
     if (!map.has(key)) map.set(key, label);
   }
-  sel.innerHTML = `<option value="all">Sværhedsgrad</option>` + Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`).join("");
+  sel.innerHTML =
+    `<option value="all">Sværhedsgrad</option>` +
+    Array.from(map.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(
+        ([k, l]) => `<option value="${escapeHtml(k)}">${escapeHtml(l)}</option>`
+      )
+      .join("");
 }
 
 function populateAgeSelect() {
@@ -209,8 +244,16 @@ function populateAgeSelect() {
     const a = Number(s.min_age ?? s.age ?? 0);
     if (a > 0) set.add(a);
   }
-  const sorted = Array.from(set).sort((a,b)=>a-b);
-  sel.innerHTML = '<option value="all">Alder</option>' + (sorted.length ? sorted.map(a=>`<option value="${a}">${a}+</option>`).join("") : ['<option value="6">6+</option>','<option value="8">8+</option>','<option value="10">10+</option>'].join(''));
+  const sorted = Array.from(set).sort((a, b) => a - b);
+  sel.innerHTML =
+    '<option value="all">Alder</option>' +
+    (sorted.length
+      ? sorted.map((a) => `<option value="${a}">${a}+</option>`).join("")
+      : [
+          '<option value="6">6+</option>',
+          '<option value="8">8+</option>',
+          '<option value="10">10+</option>',
+        ].join(""));
 }
 
 /* ---------- Filtrering ---------- */
@@ -218,26 +261,31 @@ function populateAgeSelect() {
 function matchesRangeOption(value, option) {
   if (option === "all") return true;
   if (option.endsWith("+")) {
-    const min = Number(option.replace("+",""));
+    const min = Number(option.replace("+", ""));
     return value >= min;
   }
   if (option.includes("-")) {
-    const [min, max] = option.split("-").map(n => Number(n));
+    const [min, max] = option.split("-").map((n) => Number(n));
     return value >= min && value <= max;
   }
   return value === Number(option);
 }
 
 function filterSpil() {
-  const q = document.querySelector("#search-input")?.value.trim().toLowerCase() || "";
+  const q =
+    document.querySelector("#search-input")?.value.trim().toLowerCase() || "";
   const genreValue = document.querySelector("#genre-select")?.value || "all";
-  const playersValue = document.querySelector("#players-select")?.value || "all";
-  const playtimeValue = document.querySelector("#playtime-select")?.value || "all";
-  const locationValue = document.querySelector("#location-select")?.value || "all";
-  const difficultyValue = document.querySelector("#difficulty-select")?.value || "all";
+  const playersValue =
+    document.querySelector("#players-select")?.value || "all";
+  const playtimeValue =
+    document.querySelector("#playtime-select")?.value || "all";
+  const locationValue =
+    document.querySelector("#location-select")?.value || "all";
+  const difficultyValue =
+    document.querySelector("#difficulty-select")?.value || "all";
   const ageValue = document.querySelector("#age")?.value || "all";
 
-  const result = allSpil.filter(s => {
+  const result = allSpil.filter((s) => {
     if (q) {
       const title = (s.title || s.name || "").toLowerCase();
       const desc = (s.description || "").toLowerCase();
@@ -248,9 +296,12 @@ function filterSpil() {
       const raw = s.genre ?? s.genres ?? s.category ?? s.categories;
       let gList = [];
       if (Array.isArray(raw)) {
-        gList = raw.map(g => (typeof g === "object" ? norm(g.name ?? g.title ?? g.value) : norm(g)));
+        gList = raw.map((g) =>
+          typeof g === "object" ? norm(g.name ?? g.title ?? g.value) : norm(g)
+        );
       } else if (typeof raw === "string") gList = [norm(raw)];
-      else if (raw && typeof raw === "object") gList = [norm(raw.name ?? raw.title ?? raw.value)];
+      else if (raw && typeof raw === "object")
+        gList = [norm(raw.name ?? raw.title ?? raw.value)];
       if (!gList.includes(genreValue)) return false;
     }
 
@@ -258,7 +309,8 @@ function filterSpil() {
       let p = Number(s.players);
       if (isNaN(p)) {
         if (s.minPlayers) p = Number(s.minPlayers);
-        else if (typeof s.players === "string" && s.players.includes("-")) p = Number(s.players.split("-")[0]);
+        else if (typeof s.players === "string" && s.players.includes("-"))
+          p = Number(s.players.split("-")[0]);
         else p = 0;
       }
       if (!matchesRangeOption(p, playersValue)) return false;
@@ -297,57 +349,135 @@ function displaySpil(list) {
   if (!container) return;
   container.innerHTML = "";
   if (!list || list.length === 0) {
-    container.innerHTML = '<p class="no-results">Ingen spil matchede dine filtre 😢</p>';
+    container.innerHTML =
+      '<p class="no-results">Ingen spil matchede dine filtre 😢</p>';
     return;
   }
   for (const s of list) renderSpilCard(s, container);
 }
 
+const FAVORITES_KEY = "favoritSpil";
+
+// Hent favoritter fra localStorage
+function getFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+// Gem favoritter til localStorage
+function saveFavorites(favs) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+}
+
+// Tjek om spil allerede er favorit
+function isFavorite(spil) {
+  const favs = getFavorites();
+  return favs.some((f) => f.title === spil.title);
+}
+
+// Render spilkort med favorit-funktionalitet
 function renderSpilCard(spil, container) {
   const image = spil.image || spil.image_url || "";
   const title = spil.title || spil.name || "Untitled";
   const rating = spil.rating ?? "N/A";
   const playtime = spil.playtime ?? spil.duration ?? "-";
   const players = spil.players ?? spil.minPlayers ?? "-";
-  const genreLabel = Array.isArray(spil.genre) ? spil.genre.join(", ") : (spil.genre ? String(spil.genre) : "-");
+  const genreLabel = Array.isArray(spil.genre)
+    ? spil.genre.join(", ")
+    : spil.genre
+    ? String(spil.genre)
+    : "-";
   const desc = spil.description || "";
 
+  const liked = isFavorite(spil);
+
   const html = `
-    <article class="spil-card" tabindex="0">
-      <img src="${escapeHtml(image)}" class="spil-poster" alt="Poster ${escapeHtml(title)}">
-      <div class="spil-info">
-        <h3>${escapeHtml(title)} <span class="spil-rating">(${escapeHtml(rating)})</span></h3>
-        <p><strong>Genre:</strong> ${escapeHtml(genreLabel)}</p>
-        <p><strong>Spilletid:</strong> ${escapeHtml(playtime)}</p>
-        <p><strong>Spillere:</strong> ${escapeHtml(players)}</p>
-        <p class="description">${escapeHtml(desc)}</p>
-        <button class="details-btn" type="button">Læs mere</button>
-      </div>
-    </article>
-  `;
+   <article class="spil-card" tabindex="0">
+     <img src="${liked ? "img/fyldthjerte.png" : "img/tomthjerte.svg"}"
+          alt="Favorit"
+          class="heart-icon">
+     <img src="${escapeHtml(image)}"
+          class="spil-poster"
+          alt="Poster ${escapeHtml(title)}">
+     <div class="spil-info">
+       <h3>${escapeHtml(title)} <span class="spil-rating">(${escapeHtml(
+    rating
+  )})</span></h3>
+       <p><strong>Genre:</strong> ${escapeHtml(genreLabel)}</p>
+       <p><strong>Spilletid:</strong> ${escapeHtml(playtime)}</p>
+       <p><strong>Spillere:</strong> ${escapeHtml(players)}</p>
+       <p class="description">${escapeHtml(desc)}</p>
+       <button class="details-btn" type="button">Læs mere</button>
+     </div>
+   </article>
+ `;
+
   container.insertAdjacentHTML("beforeend", html);
   const el = container.lastElementChild;
+
   if (el) el.addEventListener("click", () => showSpilModal(spil));
+
+  const heart = el.querySelector(".heart-icon");
+  if (heart) {
+    heart.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const favs = getFavorites();
+      const alreadyFav = isFavorite(spil);
+
+      if (alreadyFav) {
+        // Fjern fra favoritter
+        const newFavs = favs.filter((f) => f.title !== spil.title);
+        saveFavorites(newFavs);
+
+        // Hvis vi er på favoritter.html, fjern kortet fra DOM
+        if (container.id === "favorit-list") {
+          el.remove();
+          // Hvis listen bliver tom, vis besked
+          if (!container.querySelector(".spil-card")) {
+            container.innerHTML = "<p>Du har ingen favoritter endnu ❤️</p>";
+          }
+        } else {
+          heart.src = "img/tomthjerte.svg";
+        }
+      } else {
+        // Tilføj til favoritter
+        favs.push(spil);
+        saveFavorites(favs);
+        heart.src = "img/fyldthjerte.png";
+      }
+    });
+  }
 }
 
 function showSpilModal(spil) {
   const dialog = document.querySelector("#spil-dialog");
   const content = document.querySelector("#dialog-content");
   if (!dialog || !content) return;
-  const imageHtml = spil.image ? `<img src="${escapeHtml(spil.image)}" class="spil-poster">` : "";
-  const genreText = Array.isArray(spil.genre) ? spil.genre.join(", ") : (spil.genre ? String(spil.genre) : "-");
+  const imageHtml = spil.image
+    ? `<img src="${escapeHtml(spil.image)}" class="spil-poster">`
+    : "";
+  const genreText = Array.isArray(spil.genre)
+    ? spil.genre.join(", ")
+    : spil.genre
+    ? String(spil.genre)
+    : "-";
   content.innerHTML = `
-    ${imageHtml}
-    <div class="dialog-details">
-      <h2>${escapeHtml(spil.title ?? spil.name ?? "Untitled")}</h2>
-      <p><strong>Genre:</strong> ${escapeHtml(genreText)}</p>
-      <p>${escapeHtml(spil.description ?? "")}</p>
-    </div>
-  `;
+   ${imageHtml}
+   <div class="dialog-details">
+     <h2>${escapeHtml(spil.title ?? spil.name ?? "Untitled")}</h2>
+     <p><strong>Genre:</strong> ${escapeHtml(genreText)}</p>
+     <p>${escapeHtml(spil.description ?? "")}</p>
+   </div>
+ `;
   const closeBtn = dialog.querySelector("#close-dialog");
   if (closeBtn) {
     closeBtn.replaceWith(closeBtn.cloneNode(true));
-    dialog.querySelector("#close-dialog").addEventListener("click", ()=>dialog.close(), { once: true });
+    dialog
+      .querySelector("#close-dialog")
+      .addEventListener("click", () => dialog.close(), { once: true });
   }
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
@@ -356,7 +486,15 @@ function showSpilModal(spil) {
 /* ---------- Utilities ---------- */
 
 function clearAllFilters() {
-  const els = ["#search-input","#genre-select","#players-select","#playtime-select","#location-select","#difficulty-select","#age"];
+  const els = [
+    "#search-input",
+    "#genre-select",
+    "#players-select",
+    "#playtime-select",
+    "#location-select",
+    "#difficulty-select",
+    "#age",
+  ];
   for (const sel of els) {
     const el = document.querySelector(sel);
     if (!el) continue;

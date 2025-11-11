@@ -1,12 +1,34 @@
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1> Her kommer siden til favirtter til at være </h1>
-</body>
-</html>
+<html lang="da">
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>Mine Favoritter</title>
+   <link rel="stylesheet" href="style.css" />
+   <script src="js/app.js" defer></script>
+   <script defer>
+     window.addEventListener("DOMContentLoaded", () => {
+       const container = document.querySelector("#favorit-list");
+       const favs = getFavorites();
+
+
+       if (!favs.length) {
+         container.innerHTML = "<p>Du har ingen favoritter endnu </p>";
+         return;
+       }
+
+
+       // Render alle favoritter med samme funktionalitet som index.html
+       favs.forEach((spil) => renderSpilCard(spil, container));
+     });
+   </script>
+ </head>
+ <body>
+   <header>
+     <h1>Mine Favoritter</h1>
+   </header>
+
+
+   <main>
+     <!-- Container med samme CSS som index.html -->
+     <section id="favorit-list" class="spil-grid"></section>
