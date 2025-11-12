@@ -110,144 +110,122 @@ function bindUI() {
   });
 }
 
-// Opret top 10 carousel
+/* ---------- Top 10 Carousel ---------- */
+
 function createTop10Carousel() {
-  const SPEED_PX_PER_SEC = 40; // juster hastighed (px/s)
+  const container = document.querySelector("#top10-carousel");
+  if (!container) return;
+  
+  // Tag de 10 bedst ratede spil
   const top10 = [...allSpil]
     .sort((a, b) => (b.rating || 0) - (a.rating || 0))
     .slice(0, 10);
-  if (!top10.length) return;
-
-  const existing = document.querySelector("#top-carousel");
-  if (existing) existing.remove();
-
-  const container = document.createElement("section");
-  container.id = "top-carousel";
-  container.className = "carousel";
-
-  container.innerHTML = `
-    <h2 class="carousel-title">Top 10</h2>
-    <div class="carousel-viewport" tabindex="0" aria-roledescription="carousel">
-      <div class="carousel-track"></div>
-    </div>
-  `;
-
-  const track = container.querySelector(".carousel-track");
-  const viewport = container.querySelector(".carousel-viewport");
-
-  for (const s of top10) {
-    const title = s.title || s.name || "Untitled";
-    const img = s.image || s.image_url || "";
-    const rating = s.rating ?? "N/A";
-    const card = document.createElement("article");
-    card.className = "carousel-card";
-    card.innerHTML = `
-      <img src="${escapeHtml(img)}" alt="${escapeHtml(
-      title
-    )}" class="carousel-poster">
-      <div class="carousel-info">
-        <h4>${escapeHtml(title)}</h4>
-        <div class="carousel-meta">⭐ ${escapeHtml(String(rating))}</div>
-      </div>
-    `;
-    card.addEventListener("click", () => showSpilModal(s));
-    track.appendChild(card);
+  
+  // Render hvert spil i karrusellen
+  for (const spil of top10) {
+    renderCarouselCard(spil, container);
   }
-
-  // ensure container inserted into DOM
-  const spilList = document.querySelector("#spil-list");
-  if (spilList) spilList.before(container);
-  else document.querySelector("main").prepend(container);
-
-  // Duplicate children to enable seamless loop
-  const originalChildren = Array.from(track.children);
-  for (const child of originalChildren) {
-    const clone = child.cloneNode(true);
-    // keep click handler for modal by delegation to cloned content
-    track.appendChild(clone);
-  }
-
-  // wait for images to load before measuring
-  const imgs = Array.from(track.querySelectorAll("img"));
-  const imgPromises = imgs.map((img) =>
-    img.complete
-      ? Promise.resolve()
-      : new Promise((res) => img.addEventListener("load", res, { once: true }))
-  );
-
-  Promise.all(imgPromises).then(() => {
-    track.style.display = "flex";
-    track.style.gap = getComputedStyle(track).gap || "1rem";
-    track.style.willChange = "transform";
-
-    // measure width of one loop (original set)
-    const originalWidth =
-      originalChildren.reduce((sum, el) => {
-        const r = el.getBoundingClientRect();
-        return sum + r.width;
-      }, 0) +
-      (originalChildren.length - 1) *
-        parseFloat(getComputedStyle(track).gap || "0");
-
-    // if zero width fallback
-    const loopWidth =
-      originalWidth > 0 ? originalWidth : track.scrollWidth / 2 || 800;
-
-    let offset = 0;
-    let last = performance.now();
-    let paused = false;
-
-    function step(now) {
-      const dt = (now - last) / 1000;
-      last = now;
-      if (!paused) {
-        offset += SPEED_PX_PER_SEC * dt;
-        if (offset >= loopWidth) offset -= loopWidth;
-        track.style.transform = `translateX(${-offset}px)`;
-      }
-      requestAnimationFrame(step);
-    }
-
-    // pause/resume on hover & focus
-    container.addEventListener("mouseenter", () => (paused = true));
-    container.addEventListener("mouseleave", () => (paused = false));
-    viewport.addEventListener("focusin", () => (paused = true));
-    viewport.addEventListener("focusout", () => (paused = false));
-
-    // allow pointer drag to temporarily pause and nudge
-    let dragging = false;
-    let startX = 0;
-    let startOffset = 0;
-    viewport.addEventListener("pointerdown", (e) => {
-      dragging = true;
-      paused = true;
-      startX = e.clientX;
-      startOffset = offset;
-      viewport.setPointerCapture(e.pointerId);
-    });
-    viewport.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      const dx = e.clientX - startX;
-      offset = startOffset - dx;
-      // wrap offset
-      offset = ((offset % loopWidth) + loopWidth) % loopWidth;
-      track.style.transform = `translateX(${-offset}px)`;
-    });
-    function endDrag(e) {
-      if (!dragging) return;
-      dragging = false;
-      paused = false;
-      viewport.releasePointerCapture?.(e?.pointerId);
-    }
-    viewport.addEventListener("pointerup", endDrag);
-    viewport.addEventListener("pointercancel", endDrag);
-    viewport.addEventListener("pointerleave", endDrag);
-
-    // start animation
-    last = performance.now();
-    requestAnimationFrame(step);
-  });
+  
+  // Initialiser karrusel-funktionalitet
+  initCarousel();
 }
+
+function renderCarouselCard(spil, container) {
+  const image = spil.image || spil.image_url || "";
+  const title = spil.title || spil.name || "Untitled";
+  const rating = spil.rating ?? "N/A";
+  
+  let players = "-";
+  if (spil.players) {
+    if (typeof spil.players === "object" && spil.players.min && spil.players.max) {
+      players = `${spil.players.min}-${spil.players.max}`;
+    } else if (typeof spil.players === "string" || typeof spil.players === "number") {
+      players = String(spil.players);
+    }
+  }
+  
+  const html = `
+    <article class="spil-card carousel-card" tabindex="0">
+      <img src="${escapeHtml(image)}" class="spil-poster" alt="Poster ${escapeHtml(title)}">
+      <div class="spil-info">
+        <h3>${escapeHtml(title)} <span class="spil-rating">(${escapeHtml(rating)})</span></h3>
+        <p><strong>👥 Spillere:</strong> ${escapeHtml(players)}</p>
+        <button class="details-btn" type="button">Læs mere</button>
+      </div>
+    </article>
+  `;
+  
+  container.insertAdjacentHTML("beforeend", html);
+  const el = container.lastElementChild;
+  
+  if (el) {
+    const detailsBtn = el.querySelector('.details-btn');
+    if (detailsBtn) {
+      detailsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showSpilModal(spil);
+      });
+    }
+  }
+}
+
+// Smooth auto-scroll for karrusel
+function initCarousel() {
+  const wrapper = document.querySelector(".carousel-wrapper");
+  if (!wrapper) {
+    console.log("Carousel wrapper not found!");
+    return;
+  }
+  
+  console.log("Initializing carousel auto-scroll...");
+  
+  let scrollPosition = 0;
+  const scrollSpeed = 1; // pixels per frame
+  let isPaused = false;
+  let pauseTimeout;
+  
+  function autoScroll() {
+    if (!isPaused) {
+      const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+      
+      scrollPosition += scrollSpeed;
+      
+      // Når vi når slutningen, start forfra
+      if (scrollPosition >= maxScroll) {
+        scrollPosition = 0;
+      }
+      
+      wrapper.scrollLeft = scrollPosition;
+    }
+    
+    requestAnimationFrame(autoScroll);
+  }
+  
+  // Start auto-scroll
+  requestAnimationFrame(autoScroll);
+  
+  // Pause ved manuel scroll
+  let lastScrollLeft = wrapper.scrollLeft;
+  wrapper.addEventListener('scroll', () => {
+    const currentScrollLeft = wrapper.scrollLeft;
+    
+    // Hvis scroll-forskellen er stor (bruger har scrollet manuelt)
+    if (Math.abs(currentScrollLeft - lastScrollLeft) > scrollSpeed * 2) {
+      isPaused = true;
+      scrollPosition = currentScrollLeft;
+      
+      clearTimeout(pauseTimeout);
+      pauseTimeout = setTimeout(() => {
+        isPaused = false;
+      }, 2000);
+    }
+    
+    lastScrollLeft = currentScrollLeft;
+  }, { passive: true });
+  
+  console.log("Carousel auto-scroll started!");
+}
+
 
 // Hent data
 async function getSpil() {
@@ -511,6 +489,201 @@ function filterSpil() {
   displaySpil(result);
 }
 
+function filterSpil() {
+const q =
+  document.querySelector("#search-input")?.value.trim().toLowerCase() || "";
+const genreValue = document.querySelector("#genre-select")?.value || "all";
+const playersValue =
+  document.querySelector("#players-select")?.value || "all";
+const playtimeValue =
+  document.querySelector("#playtime-select")?.value || "all";
+const locationValue =
+  document.querySelector("#location-select")?.value || "all";
+const difficultyValue =
+  document.querySelector("#difficulty-select")?.value || "all";
+const ageValue = document.querySelector("#age")?.value || "all";
+
+
+// Tjek om der er aktive filtre
+const hasActiveFilters = q !== "" ||
+  genreValue !== "all" ||
+  playersValue !== "all" ||
+  playtimeValue !== "all" ||
+  locationValue !== "all" ||
+  difficultyValue !== "all" ||
+  ageValue !== "all";
+}
+
+
+// ...existing code...
+/* ---------- Top 10 Carousel (opdateret til at bruge .carousel-container) ---------- */
+
+function createTop10Carousel() {
+  const container = document.querySelector(".carousel-container");
+  if (!container) return;
+
+  // ryd tidligere indhold
+  container.innerHTML = "";
+
+  // wrapper + track
+  const wrapper = document.createElement("div");
+  wrapper.className = "carousel-wrapper";
+  wrapper.tabIndex = 0; // så det kan få fokus
+  const track = document.createElement("div");
+  track.className = "carousel-track";
+  wrapper.appendChild(track);
+  container.appendChild(wrapper);
+
+  // find top10
+  const top10 = [...allSpil]
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    .slice(0, 10);
+
+  // render originals med data-index
+  top10.forEach((spil, i) => renderCarouselCard(spil, track, i));
+
+  // clone originals for sømløs looping
+  const originals = Array.from(track.children);
+  for (const ch of originals) {
+    track.appendChild(ch.cloneNode(true));
+  }
+
+  // init carousel med reference til top10-data
+  initCarousel(wrapper, track, top10.length, top10);
+}
+
+function renderCarouselCard(spil, track, index) {
+  const image = spil.image || spil.image_url || "";
+  const title = spil.title || spil.name || "Untitled";
+  const rating = spil.rating ?? "N/A";
+
+  const card = document.createElement("article");
+  card.className = "carousel-card";
+  card.setAttribute("data-index", String(index));
+  card.innerHTML = `
+    <img src="${escapeHtml(image)}" class="carousel-poster" alt="Poster ${escapeHtml(title)}">
+    <div class="carousel-info">
+      <h3 class="carousel-title-text">${escapeHtml(title)}</h3>
+      <div class="carousel-meta">⭐ ${escapeHtml(String(rating))}</div>
+      <button class="details-btn" type="button" aria-label="Læs mere om ${escapeHtml(title)}">Læs mere</button>
+    </div>
+  `;
+  track.appendChild(card);
+  // Note: detaljer håndteres via delegation i initCarousel (så kloner også virker)
+}
+
+function initCarousel(wrapper, track, originalCount, dataArray) {
+  if (!wrapper || !track) return;
+
+  // mål bredde af originals (første originalCount elementer)
+  function measureOriginalWidth() {
+    const children = Array.from(track.children).slice(0, originalCount);
+    const gap = parseFloat(getComputedStyle(track).gap || "0");
+    return children.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) + Math.max(0, (children.length - 1)) * gap;
+  }
+
+  // delegation for "Læs mere" knapper
+  track.addEventListener("click", (e) => {
+    const btn = e.target.closest(".details-btn");
+    if (!btn) return;
+    const card = btn.closest(".carousel-card");
+    if (!card) return;
+    const idx = Number(card.getAttribute("data-index"));
+    const item = dataArray[idx];
+    if (item) showSpilModal(item);
+  });
+
+  // autoplay scrollLeft loop
+  let originalWidth = measureOriginalWidth();
+  let last = performance.now();
+  const SPEED_PX_PER_SEC = 30;
+  let paused = false;
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartScroll = 0;
+
+  // wrap helper
+  function wrapScroll() {
+    if (wrapper.scrollLeft >= originalWidth) wrapper.scrollLeft -= originalWidth;
+    if (wrapper.scrollLeft < 0) wrapper.scrollLeft += originalWidth;
+  }
+
+  function step(now) {
+    const dt = (now - last) / 1000;
+    last = now;
+    if (!paused && !isDragging) {
+      wrapper.scrollLeft += SPEED_PX_PER_SEC * dt;
+      wrapScroll();
+    }
+    requestAnimationFrame(step);
+  }
+
+  // pause on hover/focus
+  wrapper.addEventListener("mouseenter", () => (paused = true));
+  wrapper.addEventListener("mouseleave", () => (paused = false));
+  wrapper.addEventListener("focusin", () => (paused = true));
+  wrapper.addEventListener("focusout", () => (paused = false));
+
+  // pointer drag for horizontal scrolling
+  wrapper.addEventListener("pointerdown", (e) => {
+    isDragging = true;
+    paused = true;
+    dragStartX = e.clientX;
+    dragStartScroll = wrapper.scrollLeft;
+    wrapper.setPointerCapture(e.pointerId);
+  });
+  wrapper.addEventListener("pointermove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    wrapper.scrollLeft = dragStartScroll - dx;
+    wrapScroll();
+  });
+  function endDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    paused = false;
+    wrapper.releasePointerCapture?.(e?.pointerId);
+  }
+  wrapper.addEventListener("pointerup", endDrag);
+  wrapper.addEventListener("pointercancel", endDrag);
+  wrapper.addEventListener("pointerleave", endDrag);
+
+  // wheel: kun håndter horisontal intention (ellers lad siden scrolle)
+  wrapper.addEventListener(
+    "wheel",
+    (e) => {
+      const absX = Math.abs(e.deltaX);
+      const absY = Math.abs(e.deltaY);
+      if (absX > absY || e.shiftKey) {
+        // bruger ønsker horisontal navigation -> forhindr side-scroll og scroll wrapper
+        e.preventDefault();
+        wrapper.scrollLeft += e.deltaX || e.deltaY;
+        wrapScroll();
+      }
+      // ellers gør ingenting: lodret scroll påvirker siden som normalt
+    },
+    { passive: false }
+  );
+
+  // re-measure ved resize / font load
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      originalWidth = measureOriginalWidth() || originalWidth;
+    }, 120);
+  });
+
+  // start animation
+  last = performance.now();
+  requestAnimationFrame(step);
+}
+// ...existing code...
+
+
+
+
+
 /* ---------- Render / UI ---------- */
 
 function displaySpil(list) {
@@ -598,7 +771,7 @@ function renderSpilCard(spil, container) {
        </div>
      </div>
 
-
+     <p><strong>Lokation:</strong> ${escapeHtml(spil.location ?? "-")}</p>
      <p><strong>Genre:</strong> ${escapeHtml(genreLabel)}</p>
      <p><strong>Spilletid:</strong> ${escapeHtml(playtime)}</p>
      <p><strong>Spillere:</strong> ${playerText}</p>
@@ -695,6 +868,7 @@ function showSpilModal(spil) {
    <div>
      <h2>${escapeHtml(spil.title)}</h2>
      <p><strong>Rating:</strong> ${escapeHtml(spil.rating)}</p>
+     <p><strong>Lokation:</strong> ${escapeHtml(spil.location ?? "-")}</p>
      <p><strong>Genre:</strong> ${escapeHtml(spil.genreLabel)}</p>
      <p><strong>Spilletid:</strong> ${escapeHtml(spil.playtime)}</p>
      <p><strong>Spillere:</strong> ${playerText}</p>
