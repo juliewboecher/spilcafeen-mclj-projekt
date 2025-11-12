@@ -8,164 +8,106 @@
   </head>
 
   <body id="top">
+
     <header>
-  <div class="logo">
-    <a href="/"><img src="https://images.squarespace-cdn.com/content/v1/61fd2c9026a58c435d260f4c/1af90772-e642-4309-a2cb-f4161e36855e/SC-logo-2023-transparant-BG+Small+Crop.png?format=1500w" alt="Spilcafeen logo"></a>
-  </div>
-
-  <nav class="main-nav" aria-label="Hovednavigation">
-    <ul>
-      <li><a href="#reservér">Reservér Bord</a></li>
-      <li><a href="#membership">Membership</a></li>
-      <li><a href="#menu">Menu</a></li>
-      <li><a href="#spilguide">Spilguide</a></li>
-
-  <div class="right-links">
-    <a class="spiloversigt" href="#spiloversigt">Spiloversigt</a>
-    <a class="in-english" href="/en">In English</a>
-  </div>
-  <a href="favoritter.html" class="favoritterknap"
-        ><img src="img/fyldthjerte.png" alt="fyldt hjerte" />
-      </a>
-      <p></p>
-    </ul>
-  </nav>
-
+      <h1><a href="#top" class="skip-to-top"><img src="img/logo.webp" alt="spilcafeenlogo"></a></h1>
+      
+      <nav class="main-nav">
+        <a href="#reservér">Reservér Bord</a>
+        <a href="#membership">Membership</a>
+        <a href="#menu">Menu</a>
+        <a href="#spilguide">Spilguide</a>
+        <div class="nav-group">
+          <a href="#spiloversigt" class="active-page">Spiloversigt</a>
+          <a href="#english" class="sub-link">In English</a>
+        </div>
+      </nav>
+      
+      <a href="favoritter.html" class="favoritterknap"><img src="img/fyldthjerte.png" alt="fyldt hjerte"></a>
     </header>
 
-    
     <main>
-
-          <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Søg efter spil..." />
+      <!-- Søgefelt og filter knap -->
+      <div class="filter-search-container">
+        <button id="toggle-filters" aria-expanded="false" aria-controls="filters-panel" class="filters-toggle">Vis filtre ▾</button>
+        <div class="search-bar-main">
+          <input type="text" id="search-input" placeholder="Søg efter spil..." />
+        </div>
+        <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
       </div>
-     
       
-      <!-- Filter bar til at søge efter specifik spil -->
-
-      <!-- Toggle-knap til filtre -->
-      <button
-        id="toggle-filters"
-        aria-expanded="false"
-        aria-controls="filters-panel"
-        class="filters-toggle"
-      >
-        Vis filtre ▾
-      </button>
-
-      <!-- Filter-panelet (start skjult) -->
+       <!-- Filter-panelet (start skjult) -->
       <div id="filters-panel" class="filterbar collapsed" aria-hidden="true">
+        
         <div class="filter-item">
           <select id="genre-select">
             <option value="all">Alle genrer</option>
           </select>
-          <button
-            type="button"
-            class="clear-filter"
-            data-target="#genre-select"
-            aria-label="Ryd genre"
-          >
-            ✕
-          </button>
+          <button type="button" class="clear-filter" data-target="#genre-select" aria-label="Ryd genre">✕</button>
         </div>
-
+      
         <div class="filter-item">
           <select id="players-select">
             <option value="all">Antal spillere</option>
           </select>
-          <button
-            type="button"
-            class="clear-filter"
-            data-target="#players-select"
-            aria-label="Ryd antal spillere"
-          >
-            ✕
-          </button>
+          <button type="button" class="clear-filter" data-target="#players-select" aria-label="Ryd antal spillere">✕</button>
         </div>
 
         <div class="filter-item">
           <select id="playtime-select">
             <option value="all">Spilletid</option>
           </select>
-          <button
-            type="button"
-            class="clear-filter"
-            data-target="#playtime-select"
-            aria-label="Ryd spilletid"
-          >
-            ✕
-          </button>
+          <button type="button" class="clear-filter" data-target="#playtime-select" aria-label="Ryd spilletid">✕</button>
         </div>
 
         <div class="filter-item">
           <select id="location-select">
             <option value="all">Lokation</option>
           </select>
-          <button
-            type="button"
-            class="clear-filter"
-            data-target="#location-select"
-            aria-label="Ryd lokation"
-          >
-            ✕
-          </button>
+          <button type="button" class="clear-filter" data-target="#location-select" aria-label="Ryd lokation">✕</button>
         </div>
 
         <div class="filter-item">
           <select id="difficulty-select">
             <option value="all">Sværhedsgrad</option>
           </select>
-          <button
-            type="button"
-            class="clear-filter"
-            data-target="#difficulty-select"
-            aria-label="Ryd sværhedsgrad"
-          >
-            ✕
-          </button>
+          <button type="button" class="clear-filter" data-target="#difficulty-select" aria-label="Ryd sværhedsgrad">✕</button>
         </div>
 
         <div class="filter-item">
           <select id="age">
             <option value="all">Alder</option>
           </select>
-          <button
-            type="button"
-            class="clear-filter"
-            data-target="#age"
-            aria-label="Ryd alder"
-          >
-            ✕
-          </button>
+          <button type="button" class="clear-filter" data-target="#age" aria-label="Ryd alder">✕</button>
         </div>
-
-        <button id="search-btn" type="button" aria-label="Søg">Søg</button>
-
-        <button id="clear-filters" class="clear-btn">🗑️ Ryd alle filtre</button>
+        
+        
       </div>
 
-      
       <!-- Top 10 Karrusel -->
-<section class="top10-section">
- <h2>Top 10</h2>
- <div class="carousel-container">
-   <div class="carousel-wrapper">
-     <div class="carousel-track" id="top10-carousel">
-       <!-- Spil vil blive indsat her dynamisk -->
-     </div>
-   </div>
- </div>
-</section>
+      <section class="top10-section">
+        <h2>Top 10</h2>
+        <div class="carousel-container">
+          <div class="carousel-wrapper">
+            <div class="carousel-track" id="top10-carousel">
+              <!-- Spil vil blive indsat her dynamisk -->
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <!-- Spil grid -->
+       <!-- Spil grid -->
       <section id="spil-list" class="spil-grid">
-
         <!-- Spil vil blive indsat her dynamisk -->
       </section>
+
     </main>
 
-    <footer></footer>
-    <!-- SPIL Detail Modal -->
+    <footer>
+      
+     
+    </footer>
+ <!-- SPIL Detail Modal -->
     <dialog id="spil-dialog">
       <form method="dialog">
         <button id="close-dialog" aria-label="Close">✕</button>
@@ -175,5 +117,6 @@
       </form>
     </dialog>
     <script src="js/app.js"></script>
-  </body>
+
+    </body>
 </html>
