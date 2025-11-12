@@ -13,7 +13,8 @@ let allSpil = [];
 function norm(s) {
   return s === undefined || s === null ? "" : String(s).trim().toLowerCase();
 }
-
+// Escape HTML for sikker indsættelse
+// Bruges til at undgå XSS ved indsættelse af brugerdata i HTML
 function escapeHtml(str) {
   if (str === undefined || str === null) return "";
   return String(str)
@@ -562,6 +563,24 @@ function renderSpilCard(spil, container) {
 
   const liked = isFavorite(spil);
 
+  // === Spillere ===
+  let playerText = "Ukendt";
+  if (spil.players) {
+    if (typeof spil.players === "object") {
+      const min = spil.players.min || spil.players.minimum || "";
+      const max = spil.players.max || spil.players.maximum || "";
+      if (min && max && min !== max) {
+        playerText = `${min}–${max}`;
+      } else if (min) {
+        playerText = `${min}`;
+      } else {
+        playerText = "Ukendt";
+      }
+    } else {
+      playerText = spil.players;
+    }
+  }
+
   const html = `
    <article class="spil-card" tabindex="0">
      <img src="${liked ? "img/fyldthjerte.png" : "img/tomthjerte.svg"}"
@@ -571,16 +590,23 @@ function renderSpilCard(spil, container) {
           class="spil-poster"
           alt="Poster ${escapeHtml(title)}">
      <div class="spil-info">
-       <h3>${escapeHtml(title)} <span class="spil-rating">(${escapeHtml(
-    rating
-  )})</span></h3>
-       <p><strong>Genre:</strong> ${escapeHtml(genreLabel)}</p>
-       <p><strong>Spilletid:</strong> ${escapeHtml(playtime)}</p>
-       <p><strong>Spillere:</strong> ${escapeHtml(players)}</p>
-       <p class="description">${escapeHtml(desc)}</p>
-       <button class="details-btn" type="button">Læs mere</button>
+     <div class="spil-header">
+       <h3 class="spil-title">${escapeHtml(title)}</h3>
+       <div class="spil-rating-wrapper">
+         <span class="spil-rating">${escapeHtml(rating)}</span>
+         <img src="img/stjerne.svg" alt="Stjerne" class="stjerne-icon">
+       </div>
      </div>
-   </article>
+
+
+     <p><strong>Genre:</strong> ${escapeHtml(genreLabel)}</p>
+     <p><strong>Spilletid:</strong> ${escapeHtml(playtime)}</p>
+     <p><strong>Spillere:</strong> ${playerText}</p>
+     <p class="description">${escapeHtml(desc)}</p>
+     <button class="details-btn" type="button">Læs mere</button>
+   </div>
+ </article>
+
  `;
 
   container.insertAdjacentHTML("beforeend", html);
@@ -622,33 +648,62 @@ function renderSpilCard(spil, container) {
 
 function showSpilModal(spil) {
   const dialog = document.querySelector("#spil-dialog");
-  const content = document.querySelector("#dialog-content");
-  if (!dialog || !content) return;
-  const imageHtml = spil.image
-    ? `<img src="${escapeHtml(spil.image)}" class="spil-poster">`
-    : "";
-  const genreText = Array.isArray(spil.genre)
-    ? spil.genre.join(", ")
-    : spil.genre
-    ? String(spil.genre)
-    : "-";
-  content.innerHTML = `
-   ${imageHtml}
-   <div class="dialog-details">
-     <h2>${escapeHtml(spil.title ?? spil.name ?? "Untitled")}</h2>
-     <p><strong>Genre:</strong> ${escapeHtml(genreText)}</p>
-     <p>${escapeHtml(spil.description ?? "")}</p>
-   </div>
- `;
-  const closeBtn = dialog.querySelector("#close-dialog");
-  if (closeBtn) {
-    closeBtn.replaceWith(closeBtn.cloneNode(true));
+  const content = dialog.querySelector("#dialog-content");
+
+  // Byg HTML til modal
+  let playerText = "Ukendt";
+  if (spil.players) {
+    if (typeof spil.players === "object") {
+      const min = spil.players.min || spil.players.minimum || "";
+      const max = spil.players.max || spil.players.maximum || "";
+      if (min && max && min !== max) {
+        playerText = `${min}–${max}`;
+      } else if (min) {
+        playerText = `${min}`;
+      }
+    } else {
+      playerText = spil.players;
+    }
+
     dialog
       .querySelector("#close-dialog")
       .addEventListener("click", () => dialog.close(), { once: true });
   }
-  if (typeof dialog.showModal === "function") dialog.showModal();
-  else dialog.setAttribute("open", "");
+  // Dynamisk udskriv ALLE felter fra JSON
+  let extraInfo = "";
+  for (const [key, value] of Object.entries(spil)) {
+    if (
+      [
+        "title",
+        "image",
+        "desc",
+        "players",
+        "rating",
+        "genreLabel",
+        "playtime",
+      ].includes(key)
+    )
+      continue; // disse vises særskilt nedenfor
+    extraInfo += `<p><strong>${key}:</strong> ${escapeHtml(String(value))}</p>`;
+  }
+
+  // Indsæt HTML i modal
+  content.innerHTML = `
+   <img src="${escapeHtml(spil.image)}" alt="${escapeHtml(
+    spil.title
+  )}" style="width:100%;max-width:400px;border-radius:10px;">
+   <div>
+     <h2>${escapeHtml(spil.title)}</h2>
+     <p><strong>Rating:</strong> ${escapeHtml(spil.rating)}</p>
+     <p><strong>Genre:</strong> ${escapeHtml(spil.genreLabel)}</p>
+     <p><strong>Spilletid:</strong> ${escapeHtml(spil.playtime)}</p>
+     <p><strong>Spillere:</strong> ${playerText}</p>
+     <p><strong>Beskrivelse:</strong> ${escapeHtml(spil.desc)}</p>
+     ${extraInfo}
+   </div>
+ `;
+
+  dialog.showModal();
 }
 
 /* ---------- Utilities ---------- */
